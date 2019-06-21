@@ -34,7 +34,7 @@ getwd()
 ####################  Table of Contents  ############################
 ################################################################
 
-## 1. Import and peocess Data
+## 1. Import and process Data
 ## 2. Create annual rasters for each year, Rasterstack, and Sample @ grid
 
 
@@ -339,7 +339,6 @@ samples_p$FID<-1:nrow(samples_p)																										# put FID in there
 
 samples_df<-data.frame(samples_p)
 samples_df<-samples_df[,-387]																				# remove 'optional' column
-# samples_df_test<-samples_df[complete.cases(samples_df),]							# remove NAs - good, nothing to remove
 
 
 # Data/Ecoregion_state/Eco_L1_pclp Ecoregions projected to match States projection and clipped to States extent
@@ -349,6 +348,7 @@ proj4string(Ecoregion)<-crs(samples_p)
 proj4string(Ecoregion)<-crs(samples_p)
 overlay <- fortify(Ecoregion, region="NA_L1NAME")
 write.csv(overlay, "0_Anthro/Data/overlay.csv")
+overlay<-read.csv("0_Anthro/Data/overlay.csv")
 
 eco_data<-sp::over(samples_p, Ecoregion[,"NA_L1NAME"])
 samples_df$ecoregion<-eco_data$NA_L1NAME
