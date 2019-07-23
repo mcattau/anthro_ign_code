@@ -61,7 +61,7 @@ names(MODIS)
 MODIS$acq.date<-ymd(MODIS$ACQ_DATE)													# change to date
 MODIS$JD<-yday(MODIS$acq.date)																	# add JD col
 MODIS$FireYear<-year(MODIS$acq.date)															# add year column
-
+MODIS<-MODIS[MODIS$FireYear>=2003,]																													# Remove all before 2003
 
 #MTBS preprocessing
 names(MTBS)
@@ -173,7 +173,7 @@ parse_vector <- function(all_data, prefix, year_seq) {
 
 
 range(MODIS$FireYear)
-MODIS_parsed<-parse_vector(MODIS, "MODIS", 2001:2016)
+MODIS_parsed<-parse_vector(MODIS, "MODIS", 2003:2016)
 
 range(MTBS$FireYear)
 MTBS_parsed<-parse_vector(MTBS, "MTBS", 1984:2015)
@@ -248,13 +248,13 @@ names(Short)
 
 
 # Fire frequency
-Number_fires_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_Numfires", 2001:2016, "FRP", fun="count", background=0) # for count, it doesn't matter what field you use if points
+Number_fires_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_Numfires", 2003:2016, "FRP", fun="count", background=0) # for count, it doesn't matter what field you use if points
 Number_fires_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_Numfires", 1984:2015, "FireID", fun="count", background=0) 
 Number_fires_Short<-annual_rasters(Short_parsed, Fishnet, "Short_Numfires", 1992:2015, "FireYear", fun="count", background=0) # for count, it doesn't matter what field you use if points
 
 # Fire intensity - give background of NA so that not included in means if no fire in them
-Mean_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_meanFRP", 2001:2016, "FRP", fun=mean, background=NA)
-Max_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_maxFRP", 2001:2016, "FRP", fun=max,  background=NA)
+Mean_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_meanFRP", 2003:2016, "FRP", fun=mean, background=NA)
+Max_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_maxFRP", 2003:2016, "FRP", fun=max,  background=NA)
 
 # Fire event size
 Mean_area_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_meanArea", 1984:2015, "Acres", fun=mean, background=NA) 
@@ -268,7 +268,7 @@ Sum_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_sumArea", 1992:2015
 
 # Fire seasonality
 Std_JD_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_stdJD", 1984:2015, "JD", fun=sd, background=NA)
-Std_JD_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_stdJD", 2001:2016, "JD", fun=sd, background=NA) 
+Std_JD_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_stdJD", 2003:2016, "JD", fun=sd, background=NA) 
 Std_JD_Short<-annual_rasters(Short_parsed, Fishnet, "Short_stdJD", 1992:2015, "JD", fun=sd, background=NA) 
 # Make it Std JD * 2
 Std2_JD_MTBS<-calc(stack(Std_JD_MTBS), function(x) x*2, forceapply=TRUE)
@@ -286,27 +286,27 @@ writeRaster(results_rasterstack,"0_Anthro/Data/results_rasterstack.grd", format=
 # results_rasterstack<-stack("0_Anthro/Data/results_rasterstack.grd")							# Import sampled rasters - annual
 
 # stats on each variable across all years rather than annual
-Number_fires_MODIS_mean<-calc(results_rasterstack[[1:16]], mean)
-Number_fires_MTBS_mean<-calc(results_rasterstack[[17:48]], mean)
-Number_fires_Short_mean<-calc(results_rasterstack[[49:72]], mean)
+Number_fires_MODIS_mean<-calc(results_rasterstack[[1:14]], mean)
+Number_fires_MTBS_mean<-calc(results_rasterstack[[15:46]], mean)
+Number_fires_Short_mean<-calc(results_rasterstack[[47:70]], mean)
 
-Mean_FRP_MODIS_mean<-calc(results_rasterstack[[73:88]], mean, na.rm=TRUE)
-Max_FRP_MODIS_mean<-calc(results_rasterstack[[89:104]], mean, na.rm=TRUE)
+Mean_FRP_MODIS_mean<-calc(results_rasterstack[[71:84]], mean, na.rm=TRUE)
+Max_FRP_MODIS_mean<-calc(results_rasterstack[[85:98]], mean, na.rm=TRUE)
 
-Mean_area_MTBS_mean<-calc(results_rasterstack[[105:136]], mean, na.rm=TRUE)
-Max_area_MTBS_mean<-calc(results_rasterstack[[137:168]], mean, na.rm=TRUE)
-Mean_area_Short_mean<-calc(results_rasterstack[[169:192]], mean, na.rm=TRUE)
-Max_area_Short_mean<-calc(results_rasterstack[[193:216]], mean, na.rm=TRUE)
+Mean_area_MTBS_mean<-calc(results_rasterstack[[99:130]], mean, na.rm=TRUE)
+Max_area_MTBS_mean<-calc(results_rasterstack[[131:162]], mean, na.rm=TRUE)
+Mean_area_Short_mean<-calc(results_rasterstack[[163:186]], mean, na.rm=TRUE)
+Max_area_Short_mean<-calc(results_rasterstack[[187:210]], mean, na.rm=TRUE)
 
-Sum_area_MTBS_mean<-calc(results_rasterstack[[217:248]], mean, na.rm=TRUE)
-Sum_area_Short_mean<-calc(results_rasterstack[[249:272]], mean, na.rm=TRUE)
+Sum_area_MTBS_mean<-calc(results_rasterstack[[211:246]], mean, na.rm=TRUE)
+Sum_area_Short_mean<-calc(results_rasterstack[[243:266]], mean, na.rm=TRUE)
 
 # (2 * SD for season length already calculated above)
-Std_JD_MTBS_mean<-calc(results_rasterstack[[273:304]], mean, na.rm=TRUE)
-Std_JD_MODIS_mean<-calc(results_rasterstack[[305:320]], mean, na.rm=TRUE)
-Std_JD_Short_mean<-calc(results_rasterstack[[321:344]], mean, na.rm=TRUE)
+Std_JD_MTBS_mean<-calc(results_rasterstack[[267:298]], mean, na.rm=TRUE)
+Std_JD_MODIS_mean<-calc(results_rasterstack[[299:312]], mean, na.rm=TRUE)
+Std_JD_Short_mean<-calc(results_rasterstack[[313:336]], mean, na.rm=TRUE)
 
-Perc_fires_Short_human_mean<-calc(results_rasterstack[[345:368]], mean, na.rm=TRUE)
+Perc_fires_Short_human_mean<-calc(results_rasterstack[[337:360]], mean, na.rm=TRUE)
 
 
 results_rasterstack_mean<-stack(Number_fires_MODIS_mean, Number_fires_MTBS_mean, Number_fires_Short_mean, Mean_FRP_MODIS_mean, Max_FRP_MODIS_mean, Mean_area_MTBS_mean, Max_area_MTBS_mean, Mean_area_Short_mean, Max_area_Short_mean,  Sum_area_MTBS_mean, Sum_area_Short_mean, Std_JD_MTBS_mean, Std_JD_MODIS_mean, Std_JD_Short_mean, Perc_fires_Short_human_mean)
@@ -338,7 +338,7 @@ samples_p$FID<-1:nrow(samples_p)																										# put FID in there
 
 
 samples_df<-data.frame(samples_p)
-samples_df<-samples_df[,-387]																				# remove 'optional' column
+samples_df<-samples_df[,-379]																				# remove 'optional' column
 
 
 # Data/Ecoregion_state/Eco_L1_pclp Ecoregions projected to match States projection and clipped to States extent
@@ -348,7 +348,7 @@ proj4string(Ecoregion)<-crs(samples_p)
 proj4string(Ecoregion)<-crs(samples_p)
 overlay <- fortify(Ecoregion, region="NA_L1NAME")
 write.csv(overlay, "0_Anthro/Data/overlay.csv")
-overlay<-read.csv("0_Anthro/Data/overlay.csv")
+# overlay<-read.csv("0_Anthro/Data/overlay.csv")
 
 eco_data<-sp::over(samples_p, Ecoregion[,"NA_L1NAME"])
 samples_df$ecoregion<-eco_data$NA_L1NAME

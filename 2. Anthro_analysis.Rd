@@ -66,18 +66,18 @@ proj4string(samples_spatial)<-CRS("+init=epsg:32613")
 overlay <- read.csv("0_Anthro/Data/overlay.csv")
 
 # all the mean values plus FID and ecoregion
-samples_df_mean<-samples_df[,c(1:15, 384, 387)]
-samples_spatial_mean<-samples_spatial[,c(1:15, 384, 385)]
+samples_df_mean<-samples_df[,c(1:15, 376, 379)]
+samples_spatial_mean<-samples_spatial[,c(1:15, 376, 377)]
 
 
 # Names to pass later to functions
-names_vector<-c("Num fires (MODIS)", "Num fires (MTBS)", "Num fires (FPA FOD)", "Mean Intensity (MODIS)", "Maximum Intensity (MODIS)", "Mean Fire Size (MTBS)", "Max Fire Size (MTBS)",  "Mean Fire Size (FPA FOD)", "Max Fire Size (FPA FOD)",  "Burned Area (MTBS)",  "Burned Area (FPA FOD)", "Season Length (MTBS)",  "Season Length (MODIS)",  "Season Length (FPA FOD)", "Perc human ign (FPA FOD)")
+names_vector<-c("Num fires (MODIS)", "Num fires (MTBS)", "Num fires (FPA FOD)", "Mean Intensity (MODIS)", "Maximum Intensity (MODIS)", "Mean Fire Size (MTBS)", "Max Fire Size (MTBS)",  "Mean Fire Size (FPA FOD)", "Max Fire Size (FPA FOD)",  "Burned Area (MTBS)",  "Burned Area (FPA FOD)", "Season Length (MTBS)",  "Season Length (MODIS)",  "Season Length (FPA FOD)", "Prop human ign (FPA FOD)")
 
-names_simple<-c("Fire Frequency (n fires)", "Fire Frequency (n fires)", "Fire Frequency (n fires)", "Average Intensity (MW)", "Extreme Intensity(MW)", "Average Fire Size (ha)", "Extreme Fire Size (ha)", "Average Fire Size (ha)", "Extreme Fire Size (ha)", "Burned area (ha)", "Burned area (ha)", "Season Length (days)","Season Length (days)", "Season Length (days)", "Human Ignitions (Percent)")
+names_simple<-c("Fire Frequency (n fires)", "Fire Frequency (n fires)", "Fire Frequency (n fires)", "Average Intensity (MW)", "Extreme Intensity(MW)", "Average Fire Size (ha)", "Extreme Fire Size (ha)", "Average Fire Size (ha)", "Extreme Fire Size (ha)", "Burned area (ha)", "Burned area (ha)", "Season Length (days)","Season Length (days)", "Season Length (days)", "Human Ignitions (Proportion)")
 
 names_no_units<-c("Fire Frequency", "Fire Frequency", "Fire Frequency", "Average Intensity", "Extreme Intensity", "Average Fire Size", "Extreme Fire Size", "Average Fire Size", "Extreme Fire Size", "Burned area", "Burned area", "Season Length","Season Length", "Season Length", "Human Ignitions")
 
-units_simple<-c("n fires", "n fires", "n fires", "MW", "MW", "ha", "ha", "ha","ha", "ha", "ha", "days","days", "days", "percent")
+units_simple<-c("n fires", "n fires", "n fires", "MW", "MW", "ha", "ha", "ha","ha", "ha", "ha", "days","days", "days", "prop")
 
 
 
@@ -117,10 +117,10 @@ ncol=3, nrow=2, legend=c("right"))
 # compare three+ matched groups -repeated measures ANOVA for Gaussian and Friedman test for non-Gaussian (if use annual values)
 # (Could use ks.test to see if gaussian (Kolmogorov-Smirnov Test)) - just assume not Gaussian
 
-names(samples_df[,c(1:15, 384)])
+names(samples_df[,c(1:15, 376)])
 
 # Number of fires - MODIS, Short, MTBS
-num_fires_long<-gather(samples_df[,c(1:3, 384)], key=variable, value=value, -FID)
+num_fires_long<-gather(samples_df[,c(1:3, 376)], key=variable, value=value, -FID)
 num_fires_long$group<-ifelse(substr(num_fires_long$variable, 14, 18)=="MODIS", "MODIS", ifelse(substr(num_fires_long$variable, 14, 17)=="MTBS", "MTBS", ifelse(substr(num_fires_long$variable, 14, 18)=="Short", "FPA-FOD",-9999)))
 num_fires_long$group<-as.factor(num_fires_long$group)
 
@@ -140,7 +140,7 @@ pairwise.wilcox.test(num_fires_long$value,
 
 # Max Mean and Sum area - MTBS and Short
 ## Mean Area
-mean_area_long<-gather(samples_df[,c(6, 8, 384)], key=variable, value=value, -FID)
+mean_area_long<-gather(samples_df[,c(6, 8, 376)], key=variable, value=value, -FID)
 mean_area_long$group<-ifelse(substr(mean_area_long$variable, 11, 14)=="MTBS", "MTBS", ifelse(substr(mean_area_long$variable, 11, 15)=="Short", "FPA-FOD",-9999))
 mean_area_long$group<-as.factor(mean_area_long$group)
 unique(mean_area_long$group)
@@ -148,7 +148,7 @@ wilcox.test(mean_area_long$value~mean_area_long$group)
 # P ***, so diff
 
 ## Max Area
-max_area_long<-gather(samples_df[,c(7, 9, 384)], key=variable, value=value, -FID)
+max_area_long<-gather(samples_df[,c(7, 9, 376)], key=variable, value=value, -FID)
 max_area_long$group<-ifelse(substr(max_area_long$variable, 10, 13)=="MTBS", "MTBS", ifelse(substr(max_area_long$variable, 10, 14)=="Short", "FPA-FOD",-9999))
 max_area_long$group<-as.factor(max_area_long$group)
 unique(max_area_long$group)
@@ -156,7 +156,7 @@ wilcox.test(max_area_long$value~max_area_long$group)
 # P ***, so diff
 
 ## Sum Area
-sum_area_long<-gather(samples_df[,c(10, 11, 384)], key=variable, value=value, -FID)
+sum_area_long<-gather(samples_df[,c(10, 11, 376)], key=variable, value=value, -FID)
 sum_area_long$group<-ifelse(substr(sum_area_long$variable, 10, 13)=="MTBS", "MTBS", ifelse(substr(sum_area_long$variable, 10, 14)=="Short", "FPA-FOD",-9999))
 sum_area_long$group<-as.factor(sum_area_long$group)
 unique(sum_area_long$group)
@@ -165,7 +165,7 @@ wilcox.test(sum_area_long$value~sum_area_long$group)
 
 	
 # Seasonality - MTBS, MODIS, and Short
-season_long<-gather(samples_df[,c(12, 13, 14, 384)], key=variable, value=value, -FID)
+season_long<-gather(samples_df[,c(12, 13, 14, 376)], key=variable, value=value, -FID)
 season_long$group<-ifelse(substr(season_long$variable, 8, 12)=="MODIS", "MODIS", ifelse(substr(season_long$variable, 8, 11)=="MTBS", "MTBS", ifelse(substr(season_long$variable, 8, 12)=="Short", "FPA-FOD",-9999)))
 season_long$group<-as.factor(season_long$group)
 unique(season_long$group)
@@ -200,7 +200,7 @@ samples_df$ign<-ifelse(samples_df$anthro==1, "Human", ifelse(samples_df$anthro==
 ########################################################################
 
 # grab FID, x, y, ecoregion, and ign
-samples_df_annual<-samples_df[,c(16:383, 384:387, 389)]
+samples_df_annual<-samples_df[,c(16:375, 376:379, 381)]
 
 samples_df_long<-gather(samples_df_annual, key=variable, value=value, -FID, -ign, -x, -y, -ecoregion)
 
@@ -286,7 +286,7 @@ names(grouped_list_time)<-names_vector
 
 #fix the years
 for(i in c(1,4, 5, 13)){
-	grouped_list_time[[i]]$year<-grouped_list_time[[i]]$time+2001
+	grouped_list_time[[i]]$year<-grouped_list_time[[i]]$time+2003
 }
 
 for(i in c(2, 6, 7, 10, 12)){
@@ -394,14 +394,14 @@ sum(hist_table$n)
 # 1% no fire
 
 # Figure Fig. S3
-hist(samples_df_mean$Perc_human_Short_mean, xlab="Percent human ignitions", col="grey", main=" ")
+hist(samples_df_mean$Perc_human_Short_mean, xlab="Proportion human ignitions", col="grey", main=" ")
 
 	
 # subset just cells where we can determine if anthro or not
 samples_ign1<-samples_df[samples_df$anthro>0,]
 samples_ign<-samples_ign1[!is.na(samples_ign1$anthro),]
 # characteristics, ecoregion and ign type
-samples_ign_mean<-samples_ign[,c(1:15, 387, 389)]
+samples_ign_mean<-samples_ign[,c(1:15, 379, 381)]
 
 plot_ign_char<-function(x_char, xlim_2){
 	ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
@@ -468,8 +468,8 @@ fire_characteristics_ign$sig<-ifelse(sig_char<=0.001, "***",
 ifelse(sig_char<=0.01 & sig_char>0.001, "**",
 ifelse(sig_char<=0.05 & sig_char>0.01, "*",-9999)))
 
-write.table(fire_characteristics_ign, "0_Anthro/Results/1. char~ign/fire_characteristics_ign.txt")
-# fire_characteristics_ign<-read.table("0_Anthro/Results/1. char~ign/fire_characteristics_ign.txt")
+write.table(fire_characteristics_ign, "0_Anthro/Results/2. TableS2_char~ign/fire_characteristics_ign.txt")
+# fire_characteristics_ign<-read.table("0_Anthro/Results/2. TableS2_char~ign/fire_characteristics_ign.txt")
 
 
 
@@ -499,7 +499,7 @@ names(grouped_list)<-names_vector
 
 #fix the years
 for(i in c(1,4, 5, 13)){
-	grouped_list[[i]]$year<-grouped_list[[i]]$time+2001
+	grouped_list[[i]]$year<-grouped_list[[i]]$time+2003
 }
 
 for(i in c(2, 6, 7, 10, 12)){
@@ -619,7 +619,7 @@ for (i in 1:15){
 slope_stuff$perc_change_human<-round(perc_change_human,2)
 slope_stuff$perc_change_lightning<-round(perc_change_lightning,2)
 
-### Table S2
+### Table S3
 write.table(slope_stuff, "0_Anthro/Results/slope_stuff.txt")
 
 
@@ -690,7 +690,6 @@ mean_grouped_list_eco[[1]][c(13:31),]
 sd_grouped_list_eco[[1]][c(13:31),]
 
 
-### Table S6
 samples_ign_mean_eco<-samples_ign_mean
 samples_ign_mean_eco$ecoregion<-as.factor(samples_ign_mean$ecoregion)
 samples_ign_mean_eco$ign<-as.factor(samples_ign_mean_eco$ign)
@@ -752,8 +751,8 @@ for (i in 1:15){
 	}	
 }
 			
-			
-write.table(fire_characteristics_ign_eco, "0_Anthro/Results//fire_characteristics_ign_eco.txt")
+### Table S5
+write.table(fire_characteristics_ign_eco, "0_Anthro/Results/fire_characteristics_ign_eco.txt")
 
 # for mapping:
 # Mean values rather than +/- sd as above
@@ -794,7 +793,7 @@ for (i in 1:15){
 # merge with ecoregion, x, and y
 new_df<-vector('list', 15)
 for (i in 1:15){
-	new_df[[i]]<-merge(samples_df[,c(385:386, 387)], fire_characteristics_ign_eco_map[[i]][,c(1,2, 3, 7)], by.x="ecoregion", by.y="Ecoregion")
+	new_df[[i]]<-merge(samples_df[,c(377:378, 379)], fire_characteristics_ign_eco_map[[i]][,c(1,2, 3, 7)], by.x="ecoregion", by.y="Ecoregion")
 }
 
 make_gg_eco<-function(char){
@@ -814,7 +813,7 @@ ggarrange(make_gg_eco(1)+	 ggtitle(names_vector[1]), make_gg_eco(2)+	 ggtitle(na
 ggarrange(make_gg_eco(10)+	 ggtitle(names_vector[10]),make_gg_eco(11)+	 ggtitle(names_vector[11]),  make_gg_eco(12)+	 ggtitle(names_vector[12]), make_gg_eco(13)+	 ggtitle(names_vector[13]), 
 make_gg_eco(14)+	 ggtitle(names_vector[14]), make_gg_eco(15)+	 ggtitle(names_vector[15]), ncol=3, nrow=2, legend="none")
 
-
+ggarrange(make_gg_eco(13)+	 ggtitle(names_vector[13]), ncol=2, nrow=1, legend="none")
 
 make_gg_eco_char_human<-function(char){
 	ggplot(new_df[[char]],  aes(x, y)) + 
@@ -842,7 +841,7 @@ panel.background = element_blank(), axis.line = element_blank(), axis.text.x=ele
 	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
 
-# Figure 5
+# Figure 4
 #dev.off() 
 ggarrange(make_gg_eco_char_light(4), make_gg_eco_char_human(4), 
 make_gg_eco_char_light(8), make_gg_eco_char_human(8),
@@ -888,7 +887,7 @@ names(grouped_list_eco)<-names_vector
 
 #fix the years
 for(i in c(1,4, 5, 13)){
-	grouped_list_eco[[i]]$year<-grouped_list_eco[[i]]$time+2001
+	grouped_list_eco[[i]]$year<-grouped_list_eco[[i]]$time+2003
 }
 
 for(i in c(2, 6, 7, 10, 12)){
@@ -1063,7 +1062,7 @@ change_ign_eco_map_list1<-change_ign_eco_map_list[c(names_vector)]
 # merge with ecoregion, x, y, and ign?
 new_df_time<-vector('list', 15)
 for (i in 1:15){
-	new_df_time[[i]]<-merge(samples_df[,c(385:387, 389)], change_ign_eco_map_list1[[i]], by.x="ecoregion", by.y="Ecoregion")
+	new_df_time[[i]]<-merge(samples_df[,c(377:379, 381)], change_ign_eco_map_list1[[i]], by.x="ecoregion", by.y="Ecoregion")
 }
 
 
@@ -1137,13 +1136,13 @@ panel.background = element_blank(), axis.line = element_blank(), axis.text.x=ele
 
 ### Figure 6
 #dev.off() 
-ggarrange(make_gg_eco_time_light(4), make_gg_eco_time_human(4), 
+# ggarrange(make_gg_eco_time_light(4), make_gg_eco_time_human(4), 
 make_gg_eco_time_light(8), make_gg_eco_time_human(8), 
 make_gg_eco_time_light(3), make_gg_eco_time_human(3), 
 make_gg_eco_time_light(14), make_gg_eco_time_human(14), 
 ncol=2, nrow=4, legend=c("right"))
 
-ggarrange(make_gg_eco_time(4),
+# ggarrange(make_gg_eco_time(4),
 make_gg_eco_time(8),
 make_gg_eco_time(3),
 make_gg_eco_time(14),
@@ -1205,6 +1204,7 @@ for(i in 1:length(data_list)){
 		slopes[i]<-"TBD"
 		slopes2[i]<-"TBD"
 
+######## HERE #######
 
 # Check it
 num_breaks
@@ -1250,7 +1250,7 @@ for (i in 1:15) {
 plot_segmented<- function(number){
 	for (i in number:number){
 		par("mar"=c(5,5,1,1))
-		plot(data_list[[i]]$anthro, data_list[[i]]$depend.var, xlab="Percent anthropogenic ignitions", ylab=units_simple[i], cex.lab=1.5, col="lightgray", main=names_no_units[i])
+		plot(data_list[[i]]$anthro, data_list[[i]]$depend.var, xlab="Proportion anthropogenic ignitions", ylab=units_simple[i], cex.lab=1.5, col="lightgray", main=names_no_units[i])
 		if (num_breaks[i]=="1"){
 			plot(segmented_list[[i]], rug=FALSE, add=TRUE)
 			lines(segmented_list[[i]], col="blue")
