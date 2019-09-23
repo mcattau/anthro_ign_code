@@ -71,7 +71,7 @@ samples_spatial_mean<-samples_spatial[,c(1:15, 376, 377)]
 
 
 # Names to pass later to functions
-names_vector<-c("Num fires (MODIS)", "Num fires (MTBS)", "Num fires (FPA FOD)", "Mean Intensity (MODIS)", "Maximum Intensity (MODIS)", "Mean Fire Size (MTBS)", "Max Fire Size (MTBS)",  "Mean Fire Size (FPA FOD)", "Max Fire Size (FPA FOD)",  "Burned Area (MTBS)",  "Burned Area (FPA FOD)", "Season Length (MTBS)",  "Season Length (MODIS)",  "Season Length (FPA FOD)", "Prop human ign (FPA FOD)")
+names_vector<-c("Fire frequency (MODIS)", "Fire frequency  (MTBS)", "Fire frequency  (FPA FOD)", "Mean Intensity (MODIS)", "Maximum Intensity (MODIS)", "Mean Fire Size (MTBS)", "Max Fire Size (MTBS)",  "Mean Fire Size (FPA FOD)", "Max Fire Size (FPA FOD)",  "Burned Area (MTBS)",  "Burned Area (FPA FOD)", "Season Length (MTBS)",  "Season Length (MODIS)",  "Season Length (FPA FOD)", "Prop human ign (FPA FOD)")
 
 names_simple<-c("Fire Frequency (n fires)", "Fire Frequency (n fires)", "Fire Frequency (n fires)", "Average Intensity (MW)", "Extreme Intensity(MW)", "Average Fire Size (ha)", "Extreme Fire Size (ha)", "Average Fire Size (ha)", "Extreme Fire Size (ha)", "Burned area (ha)", "Burned area (ha)", "Season Length (days)","Season Length (days)", "Season Length (days)", "Human Ignitions (Proportion)")
 
@@ -86,7 +86,7 @@ plot_char <- function (var){
 		coord_equal() +
 	geom_point(size=1)+
 	scale_color_gradient(low="white", high="darkred")+
-	ggtitle(names_vector[var]) +
+	ggtitle(paste0(letters[var], ". ", names_vector[var])) +
 	theme(plot.title = element_text(hjust = 0.5))+
 	labs(colour=units_simple[var])+
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -180,8 +180,8 @@ pairwise.wilcox.test(season_long$value,
 # Max and mean  FRP = only one source - MODIS
 # % Anthro = only one source - Short
 	
-	
-	
+
+
 ########################################################################
 ######################### 1. Characterizing ignitions  ############################
 ########################################################################
@@ -298,43 +298,6 @@ for(i in c(3, 8, 9, 11, 14, 15)){
 }
 
 
-# plots of those data
-# can change y label between names_vector and names_simple
-make_gg_time<-function(char){
-	ggplot(data = grouped_list_time[[char]], aes(x = year, y = value_by_year)) +
-	geom_point(aes(alpha=0.01)) +
-	ggtitle(names_vector[char]) +
-	theme(plot.title = element_text(hjust = 0.5))+
-	scale_color_manual(values=c(cbPalette))+
-	geom_smooth(method="lm")+
-	labs(x="Year", y=units_simple[char])+
-	theme_bw()
-}
-
-cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7")
-
-### Figure S2 charanthro c-j	
-ggarrange(make_gg_time(1), make_gg_time(2), make_gg_time(3), 
-make_gg_time(4), make_gg_time(5), make_gg_time(6), 
-make_gg_time(7), make_gg_time(8),make_gg_time(9), 
-make_gg_time(10), make_gg_time(11), make_gg_time(12), 
-make_gg_time(13), make_gg_time(14), make_gg_time(15), 
-ncol=3, nrow=5, legend=c("none"))
-
-
-make_gg_time_fig<-function(char){
-	ggplot(data = grouped_list_time[[char]], aes(x = year, y = value_by_year)) +
-	geom_point(aes(alpha=0.01)) +
-	ggtitle(names_no_units[char]) +
-	theme(plot.title = element_text(hjust = 0.5))+
-	scale_color_manual(values=c(cbPalette))+
-	geom_smooth(method="lm")+
-	labs(x="Year", y=units_simple[char])+
-	theme_bw()
-}
-### Figure 1
-ggarrange(make_gg_time_fig(4), make_gg_time_fig(8),  make_gg_time_fig(3),make_gg_time_fig(14), make_gg_time_fig(15), ncol=2, nrow=3, legend=c("none"))
-
 
 # Fit linear model for each
 library(nlme)
@@ -375,7 +338,59 @@ names(slopes1)[3]<-"Percent change"
 ### Table S1
 write.table(slopes1, "0_Anthro/Results/slopes1.txt")
 
-	
+
+make_gg_time_fig<-function(char, let){
+	ggplot(data = grouped_list_time[[char]], aes(x = year, y = value_by_year)) +
+	geom_point(aes(alpha=0.01)) +
+	ggtitle(paste0(letters[let], ". ", names_vector[char], fig_sig[char,2])) +
+	theme(plot.title = element_text(hjust = 0.5))+
+	scale_color_manual(values=c(cbPalette))+
+	geom_smooth(method="lm")+
+	labs(x="Year", y=units_simple[char])+
+	theme_bw()
+}
+
+# for fig 1
+fig_sig<-data.frame(matrix(NA, nrow = 15, ncol = 2))
+fig_sig[,1]<-names_vector
+for (i in 1:15){
+	fig_sig[i,2]<- ifelse(lm_summary_list1[[i]]$coefficients[8]>0.1, " ",
+	ifelse(lm_summary_list1[[i]]$coefficients[8]>0.05 & lm_summary_list1[[i]]$coefficients[15]<=0.1, "*",
+	ifelse(lm_summary_list1[[i]]$coefficients[8]>0.01 & lm_summary_list1[[i]]$coefficients[15]<=0.05, "**",
+	ifelse(lm_summary_list1[[i]]$coefficients[8]<=0.01, "***", NA))))
+}	
+
+
+### Figure 1
+ggarrange(make_gg_time_fig(4, 1), make_gg_time_fig(9, 2),  make_gg_time_fig(3, 3), 
+make_gg_time_fig(14, 4), make_gg_time_fig(15, 5), 
+ncol=2, nrow=3, legend=c("none"))
+
+### Figure S2
+make_gg_time<-function(char){
+	ggplot(data = grouped_list_time[[char]], aes(x = year, y = value_by_year)) +
+	geom_point(aes(alpha=0.01)) +
+	ggtitle(paste0(letters[char], ". ", names_vector[char], fig_sig[char,2])) +
+	theme(plot.title = element_text(hjust = 0.5))+
+	scale_color_manual(values=c(cbPalette))+
+	geom_smooth(method="lm")+
+	labs(x="Year", y=units_simple[char])+
+	theme_bw()
+}
+
+ggarrange(make_gg_time(1), make_gg_time(2),  make_gg_time(3), 
+make_gg_time(4), make_gg_time(5),  make_gg_time(6), 
+make_gg_time(7), make_gg_time(8),  make_gg_time(9), 
+make_gg_time(10), make_gg_time(11),  make_gg_time(12), 
+make_gg_time(13), make_gg_time(14),  make_gg_time(15),
+ncol=3, nrow=5, legend=c("none"))
+
+
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7")
+
+
+
+
 	
 ########################################################################
 ######################### 3. Characterizing fire~ign  ############################
@@ -403,38 +418,6 @@ samples_ign<-samples_ign1[!is.na(samples_ign1$anthro),]
 # characteristics, ecoregion and ign type
 samples_ign_mean<-samples_ign[,c(1:15, 379, 381)]
 
-plot_ign_char<-function(x_char, xlim_2){
-	ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
-	guides(fill=guide_legend(title="Ignition source"))+
-	xlab (units_simple[x_char])+
-	geom_density(alpha=.5)+
-	ggtitle(names_vector[x_char])+
-	scale_fill_manual(values=c(cbPalette))+
-	coord_cartesian(xlim = c(0, xlim_2))+
-	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-panel.background = element_blank(), axis.line = element_line(colour = "black"))
-}
-
-plot_ign_char1<-function(x_char, xlim_2){
-	ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
-	guides(fill=guide_legend(title="Ignition source"))+
-	xlab (units_simple[x_char])+
-	geom_density(alpha=.5)+
-	ggtitle(names_no_units[x_char])+
-	scale_fill_manual(values=c(cbPalette))+
-	coord_cartesian(xlim = c(0, xlim_2))+
-	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-panel.background = element_blank(), axis.line = element_line(colour = "black"))
-}
-
-### Figure Fig. S4
-ggarrange(plot_ign_char(x_char=1, 150), plot_ign_char(x_char=2, 1.5), plot_ign_char(x_char=3, 100), 
-plot_ign_char(x_char=4, 150), plot_ign_char(x_char=5, 1500), plot_ign_char(x_char=6, 25000),
-plot_ign_char(x_char=7, 30000), plot_ign_char(x_char=8, 200), plot_ign_char(x_char=9, 700),
-ncol=3, nrow=3, common.legend=TRUE, legend = c("right"))
-ggarrange(plot_ign_char(x_char=10, 20000), plot_ign_char(x_char=11, 800), plot_ign_char(x_char=12, 250),
-plot_ign_char(x_char=13, 250), plot_ign_char(x_char=14, 250), plot_ign_char(x_char=15, 1.0), 
-ncol=3, nrow=2, legend = c("none"))		
 
 ### Table S2
 mean_char<-vector("list", 15)
@@ -470,6 +453,27 @@ ifelse(sig_char<=0.05 & sig_char>0.01, "*",-9999)))
 
 write.table(fire_characteristics_ign, "0_Anthro/Results/2. TableS2_char~ign/fire_characteristics_ign.txt")
 # fire_characteristics_ign<-read.table("0_Anthro/Results/2. TableS2_char~ign/fire_characteristics_ign.txt")
+
+plot_ign_char<-function(x_char, xlim_2){
+	ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
+	guides(fill=guide_legend(title="Ignition source"))+
+	xlab (units_simple[x_char])+
+	geom_density(alpha=.5)+
+	ggtitle(paste0(letters[x_char], ". ",  names_vector[x_char], fire_characteristics_ign$sig[x_char]))+
+	scale_fill_manual(values=c(cbPalette))+
+	coord_cartesian(xlim = c(0, xlim_2))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+}
+
+
+### Figure Fig. S4
+ggarrange(plot_ign_char(x_char=1, 150), plot_ign_char(x_char=2, 1.5), plot_ign_char(x_char=3, 100), 
+plot_ign_char(x_char=4, 150), plot_ign_char(x_char=5, 1500), plot_ign_char(x_char=6, 25000),
+plot_ign_char(x_char=7, 30000), plot_ign_char(x_char=8, 200), plot_ign_char(x_char=9, 700),
+plot_ign_char(x_char=10, 20000), plot_ign_char(x_char=11, 800), plot_ign_char(x_char=12, 250),
+plot_ign_char(x_char=13, 250), plot_ign_char(x_char=14, 250), plot_ign_char(x_char=15, 1.0), 
+ncol=3, nrow=5, common.legend=TRUE, legend = c("top"))
 
 
 
@@ -510,39 +514,6 @@ for(i in c(3, 8, 9, 11, 14, 15)){
 	grouped_list[[i]]$year<-grouped_list[[i]]$time+1992
 }
 
-# plots of those data
-make_gg<-function(char){
-	ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" | grouped_list[[char]]$ign=="Lightning"),], aes(x = year, y = value_by_group)) +
-	ggtitle(names_vector[char])+
-	geom_point(aes(color = factor(ign))) +
-	scale_color_manual(values=c(cbPalette))+
-	geom_smooth(method="lm", aes(group = ign, color = factor(ign)))+
-	labs(x="Year", y=units_simple[char], colour="Ignition type")+
-	theme_bw()
-}
-	
-make_gg1<-function(char){
-	ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" | grouped_list[[char]]$ign=="Lightning"),], aes(x = year, y = value_by_group)) +
-	geom_point(aes(color = factor(ign))) +
-	scale_color_manual(values=c(cbPalette))+
-	geom_smooth(method="lm", aes(group = ign, color = factor(ign)))+
-	labs(x="Year", y=units_simple[char], colour="Ignition type")+
-	theme_bw()
-}
-		
-	
-## Figure - Fig. S5
-ggarrange(make_gg(1), make_gg(2), make_gg(3), 
-make_gg(4), make_gg(5), make_gg(6), 
-make_gg(7), make_gg(8),make_gg(9), 
-make_gg(10), make_gg(11), make_gg(12), 
-make_gg(13), make_gg(14), make_gg(15),  
-ncol=3, nrow=5, legend=c("right"), common.legend=TRUE)
-
-# Figure 2
-# Lightning has more extreme average fires
-# Human has more frequent fires with longer seasonality
-ggarrange(plot_ign_char1(x_char=4, 150), plot_ign_char1(x_char=8, 200),   plot_ign_char1(x_char=3, 100), plot_ign_char1(x_char=14, 250), make_gg1(4), make_gg1(8), make_gg1(3), make_gg1(14), ncol=4, nrow=2, legend=c("right"), common.legend=TRUE)
 
 # Fit linear model for each
 library(nlme)
@@ -621,6 +592,120 @@ slope_stuff$perc_change_lightning<-round(perc_change_lightning,2)
 
 ### Table S3
 write.table(slope_stuff, "0_Anthro/Results/slope_stuff.txt")
+
+# plots of those data
+make_gg<-function(char){
+	ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" | grouped_list[[char]]$ign=="Lightning"),], aes(x = year, y = value_by_group)) +
+	ggtitle(paste0(letters[char], ". ", names_vector[char]))+
+	geom_point(aes(color = factor(ign))) +
+	scale_color_manual(values=c(cbPalette))+
+	geom_smooth(method="lm", aes(group = ign, color = factor(ign)))+
+	labs(x="Year", y=units_simple[char], colour="Ignition type")+
+	theme_bw()
+}
+	
+
+## Figure - Fig. S5
+ggarrange(make_gg(1), make_gg(2), make_gg(3), 
+make_gg(4), make_gg(5), make_gg(6), 
+make_gg(7), make_gg(8),make_gg(9), 
+make_gg(10), make_gg(11), make_gg(12), 
+make_gg(13), make_gg(14), make_gg(15),  
+ncol=3, nrow=5, legend=c("right"), common.legend=TRUE)
+
+
+plot_ign_char1<-function(x_char, xlim_2, let){
+	ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
+	guides(fill=guide_legend(title="Ignition source"))+
+	xlab (units_simple[x_char])+
+	geom_density(alpha=.5)+
+	ggtitle(paste0(letters[let], ". ",  names_no_units[x_char], fire_characteristics_ign$sig[x_char]))+
+	scale_fill_manual(values=c(cbPalette))+
+	coord_cartesian(xlim = c(0, xlim_2))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+}
+
+make_gg1<-function(char, let){
+	ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" | grouped_list[[char]]$ign=="Lightning"),], aes(x = year, y = value_by_group)) +
+	geom_point(aes(color = factor(ign))) +
+	scale_color_manual(values=c(cbPalette))+
+	ggtitle(paste0(letters[let], ". "))+
+	geom_smooth(method="lm", aes(group = ign, color = factor(ign)))+
+	labs(x="Year", y=units_simple[char], colour="Ignition type")+
+	theme_bw()
+}
+		
+		
+### Figure 2 - part 2
+# Lightning has more extreme average fires
+# Human has more frequent fires with longer seasonality
+ggarrange(plot_ign_char1(x_char=4, 150, 3), plot_ign_char1(x_char=8, 200, 4),   plot_ign_char1(x_char=3, 100, 5), plot_ign_char1(x_char=14, 250, 6), make_gg1(4, 7), make_gg1(8, 8), make_gg1(3, 9), make_gg1(14, 10), ncol=4, nrow=2, legend=c("none"))
+
+
+
+### For reviewer
+h_data<-samples_ign_mean[samples_ign_mean$ign=="Human",]
+l_data<-samples_ign_mean[samples_ign_mean$ign=="Lightning",]
+
+plot_ign_char1_rev<-function(data, x_char, xlim_2, ylim_2, let, col){
+	ggplot(data[data[,x_char]!=0,], aes(x=data[data[,x_char]!=0, x_char], fill=data[data[,x_char]!=0,]$ign))+
+	guides(fill=guide_legend(title="Ignition source"))+
+	xlab (units_simple[x_char])+
+	geom_density(alpha=.5)+
+	ggtitle(ifelse(col==1,paste0(letters[let], ". ",  names_no_units[x_char], fire_characteristics_ign$sig[x_char]), paste0(letters[let], ". ")))+
+	scale_fill_manual(values=c(cbPalette[col]))+
+	coord_cartesian(xlim = c(0, xlim_2), ylim = c(0, ylim_2))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_line(colour = "black"))
+}
+
+# For figs
+sigs<-data.frame(matrix(NA, nrow = 15, ncol = 2))
+
+for (i in 1:15){
+	sigs[i, 1]<-
+	ifelse(lm_summary_list[[i]]$coefficients[23]>0.1, " ",
+	ifelse(lm_summary_list[[i]]$coefficients[23]>0.05 & lm_summary_list[[i]]$coefficients[23]<=0.1, "*",
+	ifelse(lm_summary_list[[i]]$coefficients[23]>0.01 & lm_summary_list[[i]]$coefficients[23]<=0.05, "**",
+	ifelse(lm_summary_list[[i]]$coefficients[23]<=0.01, "***", NA))))
+
+	sigs[i, 2]<-
+	ifelse(lm_summary_list[[i]]$coefficients[24]>0.1, " ",
+	ifelse(lm_summary_list[[i]]$coefficients[24]>0.05 & lm_summary_list[[i]]$coefficients[24]<=0.1, "*",
+	ifelse(lm_summary_list[[i]]$coefficients[24]>0.01 & lm_summary_list[[i]]$coefficients[24]<=0.05, "**",
+	ifelse(lm_summary_list[[i]]$coefficients[24]<=0.01, "***", NA))))
+}	
+	
+	
+make_gg1_rev<-function(char, let, col){
+	ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" | grouped_list[[char]]$ign=="Lightning"),], aes(x = year, y = value_by_group)) +
+	geom_point(aes(color = factor(ign))) +
+	scale_color_manual(values=c(cbPalette))+
+	ggtitle(ifelse(col==1, paste0(letters[let], ". ",  names_no_units[char], sigs[char, 1]), paste0(letters[let], ". ",  names_no_units[char], sigs[char, 2])))+
+	geom_smooth(method="lm", aes(group = ign, color = factor(ign)))+
+	labs(x="Year", y=units_simple[char], colour="Ignition type")+
+	theme_bw()
+}
+	
+			
+# Figure 2 - part 2 - For reviewer
+# Lightning has more extreme average fires
+# Human has more frequent fires with longer seasonality
+ggarrange(
+plot_ign_char1_rev(h_data, x_char=4, 150, 0.035, 3, 1), plot_ign_char1_rev(l_data, x_char=4, 150, 0.035, 4, 2), 
+plot_ign_char1_rev(h_data, x_char=8, 200, 0.08, 5, 1),   plot_ign_char1_rev(l_data, x_char=8, 200, 0.08, 6, 2), 
+plot_ign_char1_rev(h_data, x_char=3, 100, 0.05, 7, 1), plot_ign_char1_rev(l_data, x_char=3, 100, 0.05, 8, 2), 
+plot_ign_char1_rev(h_data, x_char=14, 250, 0.03, 9, 1), plot_ign_char1_rev(l_data, x_char=14, 250, 0.03, 10, 2), 
+ncol=2, nrow=4, legend=c("none"))
+
+ggarrange(
+make_gg1_rev(4, 11, 1), make_gg1_rev(4, 12, 2), 
+make_gg1_rev(8, 13, 1), make_gg1_rev(8, 14, 2), 
+make_gg1_rev(3, 15, 1), make_gg1_rev(3, 16, 2), 
+make_gg1_rev(14, 17, 1), make_gg1_rev(14, 18, 2), 
+ncol=2, nrow=4, legend=c("none"))
+
 
 
 
@@ -803,17 +888,17 @@ make_gg_eco<-function(char){
 	scale_color_manual(values = c("Dominated by human ign only"="firebrick4", "Human" = "firebrick2", "Human, not sig"="bisque2", "Lightning"="dodgerblue3", "Lightning, not sig"="slategray2"))+
 	labs(colour="Ignition source with higher value")+
  	theme(plot.title = element_text(hjust = 0.5))+
+ 	ggtitle(paste0(letters[char], ". ", names_vector[char]))+
 	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
 panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
 	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
 	
 ### Figure Fig. S6
-ggarrange(make_gg_eco(1)+	 ggtitle(names_vector[1]), make_gg_eco(2)+	 ggtitle(names_vector[2]), make_gg_eco(3)+	 ggtitle(names_vector[3]), make_gg_eco(4)+	 ggtitle(names_vector[4]), make_gg_eco(5)+	 ggtitle(names_vector[5]), make_gg_eco(6)+	 ggtitle(names_vector[6]), make_gg_eco(7)+	 ggtitle(names_vector[7]), make_gg_eco(8)+	 ggtitle(names_vector[8]),make_gg_eco(9)+	 ggtitle(names_vector[9]), ncol=3, nrow=3, legend=c("right"), common.legend=TRUE)
-ggarrange(make_gg_eco(10)+	 ggtitle(names_vector[10]),make_gg_eco(11)+	 ggtitle(names_vector[11]),  make_gg_eco(12)+	 ggtitle(names_vector[12]), make_gg_eco(13)+	 ggtitle(names_vector[13]), 
-make_gg_eco(14)+	 ggtitle(names_vector[14]), make_gg_eco(15)+	 ggtitle(names_vector[15]), ncol=3, nrow=2, legend="none")
+ggarrange(make_gg_eco(1), make_gg_eco(2), make_gg_eco(3), make_gg_eco(4), make_gg_eco(5), make_gg_eco(6), make_gg_eco(7), make_gg_eco(8), make_gg_eco(9), ncol=3, nrow=3, legend=c("right"), common.legend=TRUE)
+ggarrange(make_gg_eco(10),make_gg_eco(11),  make_gg_eco(12), make_gg_eco(13), 
+make_gg_eco(14), make_gg_eco(15), ncol=3, nrow=2, legend="none")
 
-ggarrange(make_gg_eco(13)+	 ggtitle(names_vector[13]), ncol=2, nrow=1, legend="none")
 
 make_gg_eco_char_human<-function(char){
 	ggplot(new_df[[char]],  aes(x, y)) + 
@@ -827,7 +912,6 @@ panel.background = element_blank(), axis.line = element_blank(), axis.text.x=ele
 	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
 
-# 	ggtitle(names_no_units[char]) +
 
 make_gg_eco_char_light<-function(char){
 	ggplot(new_df[[char]],  aes(x, y)) + 
@@ -844,15 +928,27 @@ panel.background = element_blank(), axis.line = element_blank(), axis.text.x=ele
 # Figure 4
 #dev.off() 
 ggarrange(make_gg_eco_char_light(4), make_gg_eco_char_human(4), 
-make_gg_eco_char_light(8), make_gg_eco_char_human(8),
-make_gg_eco_char_light(3), make_gg_eco_char_human(3),
-make_gg_eco_char_light(14), make_gg_eco_char_human(14),
+make_gg_eco_char_light(6), make_gg_eco_char_human(6),
+make_gg_eco_char_light(2), make_gg_eco_char_human(2),
+make_gg_eco_char_light(12), make_gg_eco_char_human(12),
 ncol=2, nrow=4, legend=c("right"))
 
-ggarrange(make_gg_eco(4),
-make_gg_eco(8),
-make_gg_eco(3),
-make_gg_eco(14),
+make_gg_eco_fig<-function(char){
+	ggplot(new_df[[char]],  aes(x, y)) + 
+	coord_equal() +
+	geom_point(aes(color = factor(category))) +  
+	scale_color_manual(values = c("Dominated by human ign only"="firebrick4", "Human" = "firebrick2", "Human, not sig"="bisque2", "Lightning"="dodgerblue3", "Lightning, not sig"="slategray2"))+
+	labs(colour="Ignition source with higher value")+
+ 	theme(plot.title = element_text(hjust = 0.5))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
+	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+}
+	
+ggarrange(make_gg_eco_fig(4),
+make_gg_eco_fig(6),
+make_gg_eco_fig(2),
+make_gg_eco_fig(12),
 ncol=1, nrow=4, legend=c("right"))
 
 
@@ -1266,7 +1362,7 @@ for (i in 1:14){
 }
 
 
-# Figure 2
+# Figure 3
 par(mfrow=c(2,2))
 for (i in c(4, 8, 3, 14)){
 	plot_segmented(i)
@@ -1274,6 +1370,9 @@ for (i in c(4, 8, 3, 14)){
 
 slopes[c(4, 8, 3, 14)]
 slopes2[c(4, 8, 3, 14)]
+
+
+
 
 ### Table S4
 seg_table<-cbind(adj.r.square, num_breaks, breaks, slopes, slopes2)
@@ -1309,29 +1408,18 @@ ifelse(samples_ign_mean$Perc_human_Short_mean>=0.75, 3, -9999
 )))
 
 
-
-
-# Old
-# make_nich_fig<-function(variable1, variable2){
-	ggplot(samples_df_mean, aes(x=log(samples_df_mean[,variable1]), y=log(samples_df_mean[,variable2]), col=as.factor(anthro_group4))) + 
-	labs(x=names_simple[variable1], y=names_simple[variable2], color="Ignition Source")+ 
-	scale_colour_manual(values=rev(brewer.pal(4, "RdYlBu")), labels=c("Primarily Lightning", "Moderate Lightning", "Moderate Anthropogenic", "Primarily Anthropogenic")) +
-	geom_point(alpha = .5)+
-	theme_bw()+ 
-	theme(legend.position="none")
-}
-
 # could add below to fig if want to do standard error rather than sd
 	f <- function(z)sd(z)/sqrt(length(z)) # function to calculate std.err
 	se <- aggregate(cbind(se.x=log(samples_df_mean[,variable1]),se.y=log(samples_df_mean[,variable2]))~anthro_group3, samples_df_mean,f, na.action=na.omit)
 	gg <- merge(gg,se, by="anthro_group3")    # add std.err column
 		
 
-make_nich_fig<-function(variable1, variable2){
+make_nich_fig<-function(variable1, variable2, let){
 	gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=log(samples_ign_mean[,variable1]), mean.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
 	gg <- merge(gg1, aggregate(cbind(se.x=log(samples_ign_mean[,variable1]), se.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
 	ggplot(gg, aes(log(gg[,variable1+1]), log(gg[,variable2+1]),color=factor(anthro_group3)))+
 	geom_point(alpha=.4, size=1)+
+	ggtitle(paste0(letters[let], ". "))+
 	labs(x=paste0("log ", names_simple[variable1]), y=paste0("log ", names_simple[variable2]), color="Ignition Source")+ 
 	scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
 	geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
@@ -1339,22 +1427,18 @@ make_nich_fig<-function(variable1, variable2){
 	geom_errorbarh(data=gg, height=0, alpha = .2,  aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x), inherit.aes = FALSE)
 }	
 
-# Figure 2 - a 
-# Mean intensity and size
-make_nich_fig(8, 4)
-# Max intensity and size
-make_nich_fig(9, 5)
 
 samples_ign_mean$Std_JD_Short_mean2<-ifelse(samples_ign_mean$Std_JD_Short_mean==0, NA, samples_ign_mean$Std_JD_Short_mean)
 samples_ign_mean$Number_fires_Short_mean2<-ifelse(samples_ign_mean$Number_fires_Short_mean==0, NA, samples_ign_mean$Number_fires_Short_mean)
 
 names(samples_ign_mean)
 
-make_nich_fig2<-function(variable1, variable2){
+make_nich_fig2<-function(variable1, variable2, let){
 	gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=log(samples_ign_mean[,variable1]), mean.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
 	gg <- merge(gg1, aggregate(cbind(se.x=log(samples_ign_mean[,variable1]), se.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
 	ggplot(gg, aes(log(gg[,variable1]), log(gg[,variable2]),color=factor(anthro_group3)))+
 	geom_point(alpha=.2, size=1)+
+	ggtitle(paste0(letters[let], ". "))+
 	labs(x=paste0("log ", names_simple[3]), y=paste0("log ", names_simple[14]), color="Ignition Source")+ 
 	scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
 	geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
@@ -1362,16 +1446,45 @@ make_nich_fig2<-function(variable1, variable2){
 	geom_errorbarh(data=gg, height=0, alpha = .2, aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x),  inherit.aes = FALSE)
 }		
 
-# geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y,color=factor(anthro_group3)), inherit.aes = FALSE)+
-# geom_errorbarh(data=gg, height=0, alpha = .2, aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x,color=factor(anthro_group3)),  inherit.aes = FALSE)
-	
-# Figure 2 - b 
-# Season length and frequency
-make_nich_fig2(20, 19)
 
 ### Figure 2 - a,b 
-ggarrange(make_nich_fig(8, 4), make_nich_fig2(20, 19),
+ggarrange(make_nich_fig(8, 4,1), make_nich_fig2(20, 19,2),
 ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
+
+
+samples_ign_mean_Adam<-samples_ign_mean[,c(4, 8, 19, 20, 17)]
+write.csv(samples_ign_mean_Adam, "0_Anthro/Results/samples_ign_mean_Adam.csv")
+ggarrange(make_nich_fig(2, 1,1), make_nich_fig2(4, 3,2),
+ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
+
+# NO LOG FOR REVIEWER
+make_nich_fig_no_log<-function(variable1, variable2){
+	gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=(samples_ign_mean[,variable1]), mean.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
+	gg <- merge(gg1, aggregate(cbind(se.x=(samples_ign_mean[,variable1]), se.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
+	ggplot(gg, aes((gg[,variable1+1]), (gg[,variable2+1]),color=factor(anthro_group3)))+
+	geom_point(alpha=.4, size=1)+
+	labs(x=paste0(names_simple[variable1]), y=paste0(names_simple[variable2]), color="Ignition Source")+ 
+	scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
+	geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
+	geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y), inherit.aes = FALSE)+
+	geom_errorbarh(data=gg, height=0, alpha = .2,  aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x), inherit.aes = FALSE)
+}	
+
+make_nich_fig2_no_log<-function(variable1, variable2){
+	gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=log(samples_ign_mean[,variable1]), mean.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
+	gg <- merge(gg1, aggregate(cbind(se.x=(samples_ign_mean[,variable1]), se.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
+	ggplot(gg, aes((gg[,variable1]), (gg[,variable2]),color=factor(anthro_group3)))+
+	geom_point(alpha=.2, size=1)+
+	labs(x=paste0(names_simple[3]), y=paste0(names_simple[14]), color="Ignition Source")+ 
+	scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
+	geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
+	geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y), inherit.aes = FALSE)+
+	geom_errorbarh(data=gg, height=0, alpha = .2, aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x),  inherit.aes = FALSE)
+}		
+
+ggarrange(make_nich_fig_no_log(8, 4), make_nich_fig2_no_log(20, 19),
+ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
+
 
 
 # Are anthro fires less intense just be there are more of them over a longer season length when we don't think of fires getting large and hot?
