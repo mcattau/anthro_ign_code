@@ -1452,7 +1452,7 @@ ggarrange(make_nich_fig(8, 4,1), make_nich_fig2(20, 19,2),
 ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
 
 
-samples_ign_mean_Adam<-samples_ign_mean[,c(4, 8, 19, 20, 17)]
+samples_ign_mean_Adam<-samples_ign_mean[,c(4, 8, 19, 20, 18)]
 write.csv(samples_ign_mean_Adam, "0_Anthro/Results/samples_ign_mean_Adam.csv")
 ggarrange(make_nich_fig(2, 1,1), make_nich_fig2(4, 3,2),
 ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
