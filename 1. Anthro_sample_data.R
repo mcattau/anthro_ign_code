@@ -1,34 +1,31 @@
 
-#######################################################################################################################################
-### Author: Megan Cattau ##### 
-## Earth Lab, Project Forest
-## Contact info: megan.cattau@gmail.com or megan.cattau@colorado.edu, 706.338.9436
+# Anthropogenic and lightning-started fires are becoming larger and more frequent over a longer season length in the U.S.
+# Global Ecology and Biogeography
+# Code author: Megan Cattau
+# Contact info: megan.cattau@gmail.com or megancattau@boisestate.edu
 # Manuscript authors: Megan Cattau, Carol Wessman, Adam Mahood, Jennifer Balch
-## Project: Fire trends and anthro ignitions
-# Project description: This project aims to elucidate how fire physical characteristics are changing over time in the US, the influence of anthropogenic ignitions on fire physical characteristics, and how these patterns vary spatially
+# Project description: This project aims to elucidate how fire physical characteristics are changing over time in the US, the influence of anthropogenic ignitions on fire physical characteristics, and how these patterns vary over space and time.
 
 # This code:
-# Imports fire data for the entire US and generates annual rasters (50km resolution) 
+# Imports fire data for the entire US 
+# generates annual rasters (50km resolution) 
+# samples those rasters at points 
 # All data are clipped to the CONUS and projected to UTM Zone 13 WGS1984
-# samples those rasters at 50km
 
-# Data associated with this code, in Data subfolder in this project folder:
-# MTBS, MODIS active fire, Short data, States
-# raw data Desktop/US_Pyromes/Data/Data
 
 # Required packages:
 library(rgdal)
 library(sp)
+library(sf)
+library(dplyr)
 library(raster)
 library(sendmailR)
 library(tidyr)
 library(lubridate)
 library(rgeos)
 library(ggplot2)
+library(assertthat)
 
-setwd("/Users/meca3122/Dropbox/0_EarthLab/US_Pyromes")
-setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
-getwd()
 
 ################################################################
 ####################  Table of Contents  ############################
@@ -42,26 +39,60 @@ getwd()
 ###################  1. Import and Process Data  ####################
 ################################################################
 
-# Import data - fire data, sampling grid, and states boundaries - all projectd to WGS 1984 UTM Zone 13N
-MODIS<-readOGR("Data/MODIS","MODISaf_WGS8413N_c") 					# Spatial Points
-MTBS<-readOGR("Data/MTBS","MTBS_WGS84_13N") 									# Spatial Polygons
-Short <- read.table("Data/Short_Data/ShortDB.txt", sep=",",
-               header=T, fill=T,
-               quote = "\"", #quote key
-               row.names = NULL, 
-               stringsAsFactors = FALSE)          
-States<-readOGR("Data/States","CONUS") 															# Spatial Polygons
-Fishnet<- raster(ext=extent(States), resolution=50000)										# Raster that's extent of States and 50km resolution
-writeRaster(Fishnet,"Data/Fishnet.grd", format="raster", overwrite=TRUE)
+# Data will include US States boundaries and three fire data sources: MTBS fire perimeters, MODIS active fire data, and the FPA-FOD dataset.
+# create a Data folder in your working directory 
 
-projection(Fishnet)<-crs(MODIS)
 
-# MODIS preprocessing
-names(MODIS)
-MODIS$acq.date<-ymd(MODIS$ACQ_DATE)													# change to date
-MODIS$JD<-yday(MODIS$acq.date)																	# add JD col
-MODIS$FireYear<-year(MODIS$acq.date)															# add year column
-MODIS<-MODIS[MODIS$FireYear>=2003,]																													# Remove all before 2003
+setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
+setwd("Data/")
+
+# Projection for layers
+#EPSG:32613
+data_crs<- " +proj=utm +zone=13 +datum=WGS84 +units=m +no_defs +ellps=WGS84 "
+
+
+### US States
+States_download <- file.path('States', 'cb_2016_us_state_20m.shp')
+if (!file.exists(States_download)) {
+	from <- "https://www2.census.gov/geo/tiger/GENZ2016/shp/cb_2016_us_state_20m.zip"
+	to <- paste0('States', ".zip")
+	download.file(from, to)
+	unzip(to, exdir = 'States')
+	unlink(to)
+	assert_that(file.exists(States_download))
+}   
+               
+States <- st_read(dsn = 'States', layer = "cb_2016_us_state_20m", quiet = TRUE) %>%
+filter(!(NAME %in% c("Alaska", "Hawaii", "Puerto Rico"))) %>%
+dplyr::select(STATEFP, STUSPS) %>%
+setNames(tolower(names(.))) %>% 
+st_transform(., data_crs)
+          
+# States2<-readOGR("States2","CONUS") 															# Spatial Polygons
+
+# Creata a raster that's extent of States and 50km resolution and write into Data folder
+Fishnet<- raster(ext=extent(States), resolution=50000)		
+projection(Fishnet)<-crs(data_crs)	
+writeRaster(Fishnet,"Fishnet.grd", format="raster", overwrite=TRUE)
+
+
+
+### MTBS fire perimeters 
+# will be downloaded directly to Data folder
+MTBS_download <- file.path('MTBS', 'mtbs_perims_DD.shp')
+if (!file.exists(MTBS_download)) {
+	from <- "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/MTBS_Fire/data/composite_data/burned_area_extent_shapefile/mtbs_perimeter_data.zip"
+	to <- paste0('MTBS', ".zip")
+	download.file(from, to)
+	unzip(dest, exdir = 'MTBS')
+	unlink(to)
+	assert_that(file.exists(MTBS_download))
+}
+
+# Old file = MTBS2<-readOGR("Data/MTBS2","MTBS_WGS84_13N") 									# Spatial Polygons
+
+MTBS <- st_read(dsn = 'MTBS', layer = "mtbs_perims_DD", quiet = TRUE) %>%
+st_transform(., data_crs)
 
 #MTBS preprocessing
 names(MTBS)
@@ -80,12 +111,43 @@ ifelse(MTBS$StartMonth==12, 334,0
 ))))))))))))
 MTBS$JD<-MTBS$running_JD+MTBS$StartDay
 MTBS$FireYear<-MTBS$Year																				# add year column
+MTBS$FireID<-1:nrow(MTBS)																				
 
-MTBS$FireID<-1:nrow(MTBS)																				# MTBS into points
-MTBS_point1<-gCentroid(MTBS, byid=TRUE, id=MTBS$FireId)
-MTBS_point<-SpatialPointsDataFrame(MTBS_point1,MTBS@data)
+# MTBS into points
+# MTBS_point1<-gCentroid(MTBS, byid=TRUE, id=MTBS$FireId)
+# MTBS_point<-SpatialPointsDataFrame(MTBS_point1,MTBS@data)
 
 
+### MODIS active fire data
+# Submit a request via the link below for Country->United States from Jan 2003 - Dec 2016, MODIS C6, and download into Data folder and unzip
+# https://firms.modaps.eosdis.nasa.gov/download/
+
+# Old MODIS2<-readOGR("Data/MODIS2","MODISaf_WGS8413N_c") 					# Spatial Points
+# crs(MODIS2)
+MODIS <- st_read(dsn = 'DL_FIRE_M6_88165', layer = "fire_archive_M6_88165", quiet = TRUE) %>%
+st_transform(., data_crs)
+
+# MODIS preprocessing
+names(MODIS)
+MODIS$acq.date<-ymd(MODIS$ACQ_DATE)													# change to date
+MODIS$JD<-yday(MODIS$acq.date)																	# add JD col
+MODIS$FireYear<-year(MODIS$acq.date)															# add year column
+MODIS<-MODIS[MODIS$FireYear>=2003,]														# Remove all before 2003
+
+
+ ### FPA-FOD
+ # will be downloaded directly to Data folder
+ # Can be directly downloaded from here https://www.fs.usda.gov/rds/archive/catalog/RDS-2013-0009.4 as a Geodatabase: https://www.fs.usda.gov/rds/archive/products/RDS-2013-0009.4/RDS-2013-0009.4_GDB.zip
+ # The below has been processed to be easier to work with:
+ https://www.dropbox.com/s/xiyzlme6rt3ierx/shortfireseco073015.txt?dl=0
+   
+   
+Short <- read.table("Short_Data/ShortDB.txt", sep=",",
+               header=T, fill=T,
+               quote = "\"", #quote key
+               row.names = NULL, 
+               stringsAsFactors = FALSE)      
+  
 # Short preprocessing
 names(Short)
 #remove commas to delineate numeric intervals inserted by Arc - necessary preprocessing?
@@ -135,7 +197,7 @@ coordinates(Short_points)<-~LONGITUDE + LATITUDE														# make it spatial
 # Set the CRS and project it
 proj4string(Short_points)<-CRS("+init=epsg:4269")
 crs(Short_points)
-Short_points_p <- spTransform(Short_points, proj4string(MTBS))
+Short_points_p <- spTransform(Short_points, (data_crs))
 Short<-Short_points_p
 Short_human<-Short_points_p[Short_points_p$ig=="human",]
 
@@ -147,12 +209,31 @@ aggregate(Short$FIRE_SIZE, by=list(Category=Short$ig), FUN=sum)
 #   human 43714035
 # lightning 85821753
 
+            
 
 ###################################################################
 ###  2. Create annual rasters for each year, Rasterstack, and Sample @ grid  ###
 ###################################################################
 
 ######### parse all the fire layers by year into a list of vector objects, calling them "xxxxx_parsed", each vector in the list called xxxx_yyyy
+parse_vector <- function(all_data, prefix, year_seq) {
+	# The function takes a vector layer (arg: all_data; e.g., MTBS), parses it by year, gives each new object a sensible name with a defined prefix (arg: prefix; e.g., fire), 	
+	# returns a list of vector objects
+	# args= all_data (the original polygon / points data), prefix (prefix for the name of the parsed vector layers), year_seq (sequence of relevant years)
+
+	# A nested function - parse the data based on Year
+	separate_data_by_year<-function(year){
+		all_data[all_data$FireYear==year,]
+	}
+	
+	# Apply this function over the range of relevant years, resulting in a list of vector objects for each year
+	vector_list <- lapply(year_seq, separate_data_by_year)
+	# Name each object in the list prefix_year
+	names(vector_list) <- paste(prefix, year_seq, sep = "_")
+	
+	vector_list
+}
+
 parse_vector <- function(all_data, prefix, year_seq) {
 	# The function takes a vector layer (arg: all_data; e.g., MTBS), parses it by year, gives each new object a sensible name with a defined prefix (arg: prefix; e.g., fire), 	
 	# returns a list of vector objects
@@ -170,14 +251,12 @@ parse_vector <- function(all_data, prefix, year_seq) {
 	
 	vector_list
 }
-
-
 range(MODIS$FireYear)
 MODIS_parsed<-parse_vector(MODIS, "MODIS", 2003:2016)
 
 range(MTBS$FireYear)
 MTBS_parsed<-parse_vector(MTBS, "MTBS", 1984:2015)
-MTBS_point_parsed<-parse_vector(MTBS_point, "MTBS_point", 1984:2015)
+# MTBS_point_parsed<-parse_vector(MTBS_point, "MTBS_point", 1984:2015)
 
 range(Short$FireYear)
 Short_parsed<-parse_vector(Short, "Short", 1992:2015)
