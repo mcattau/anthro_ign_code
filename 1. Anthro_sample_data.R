@@ -68,13 +68,11 @@ dplyr::select(STATEFP, STUSPS) %>%
 setNames(tolower(names(.))) %>% 
 st_transform(., data_crs)
           
-# States2<-readOGR("States2","CONUS") 															# Spatial Polygons
 
 # Creata a raster that's extent of States and 50km resolution and write into Data folder
 Fishnet<- raster(ext=extent(States), resolution=50000)		
 projection(Fishnet)<-crs(data_crs)	
 writeRaster(Fishnet,"Fishnet.grd", format="raster", overwrite=TRUE)
-
 
 
 ### MTBS fire perimeters 
@@ -84,12 +82,10 @@ if (!file.exists(MTBS_download)) {
 	from <- "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/MTBS_Fire/data/composite_data/burned_area_extent_shapefile/mtbs_perimeter_data.zip"
 	to <- paste0('MTBS', ".zip")
 	download.file(from, to)
-	unzip(dest, exdir = 'MTBS')
+	unzip(to, exdir = 'MTBS')
 	unlink(to)
 	assert_that(file.exists(MTBS_download))
 }
-
-# Old file = MTBS2<-readOGR("Data/MTBS2","MTBS_WGS84_13N") 									# Spatial Polygons
 
 MTBS <- st_read(dsn = 'MTBS', layer = "mtbs_perims_DD", quiet = TRUE) %>%
 st_transform(., data_crs)
@@ -113,17 +109,11 @@ MTBS$JD<-MTBS$running_JD+MTBS$StartDay
 MTBS$FireYear<-MTBS$Year																				# add year column
 MTBS$FireID<-1:nrow(MTBS)																				
 
-# MTBS into points
-# MTBS_point1<-gCentroid(MTBS, byid=TRUE, id=MTBS$FireId)
-# MTBS_point<-SpatialPointsDataFrame(MTBS_point1,MTBS@data)
-
 
 ### MODIS active fire data
 # Submit a request via the link below for Country->United States from Jan 2003 - Dec 2016, MODIS C6, and download into Data folder and unzip
 # https://firms.modaps.eosdis.nasa.gov/download/
 
-# Old MODIS2<-readOGR("Data/MODIS2","MODISaf_WGS8413N_c") 					# Spatial Points
-# crs(MODIS2)
 MODIS <- st_read(dsn = 'DL_FIRE_M6_88165', layer = "fire_archive_M6_88165", quiet = TRUE) %>%
 st_transform(., data_crs)
 
@@ -180,7 +170,6 @@ nrow(Short[Short$ig=="unknown",]) # 197906
 nrow(Short[Short$ig=="human",]) # 1409412
 nrow(Short[Short$ig=="lightning",]) # 273147
 
-
 #clean up long/lat coordinates (x, y)
 Short <- subset(Short, is.na(Short$LATITUDE) == FALSE) #cleaning up a few NAs
 Short <- subset(Short, is.na(Short$LONGITUDE) == FALSE)
@@ -234,23 +223,6 @@ parse_vector <- function(all_data, prefix, year_seq) {
 	vector_list
 }
 
-parse_vector <- function(all_data, prefix, year_seq) {
-	# The function takes a vector layer (arg: all_data; e.g., MTBS), parses it by year, gives each new object a sensible name with a defined prefix (arg: prefix; e.g., fire), 	
-	# returns a list of vector objects
-	# args= all_data (the original polygon / points data), prefix (prefix for the name of the parsed vector layers), year_seq (sequence of relevant years)
-
-	# A nested function - parse the data based on Year
-	separate_data_by_year<-function(year){
-		all_data[all_data@data$FireYear==year,]
-	}
-	
-	# Apply this function over the range of relevant years, resulting in a list of vector objects for each year
-	vector_list <- lapply(year_seq, separate_data_by_year)
-	# Name each object in the list prefix_year
-	names(vector_list) <- paste(prefix, year_seq, sep = "_")
-	
-	vector_list
-}
 range(MODIS$FireYear)
 MODIS_parsed<-parse_vector(MODIS, "MODIS", 2003:2016)
 
@@ -328,7 +300,7 @@ names(Short)
 
 # Fire frequency
 Number_fires_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_Numfires", 2003:2016, "FRP", fun="count", background=0) # for count, it doesn't matter what field you use if points
-Number_fires_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_Numfires", 1984:2015, "FireID", fun="count", background=0) 
+Number_fires_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_Numfires", 1984:2015, "FireID", fun="count", background=0) 
 Number_fires_Short<-annual_rasters(Short_parsed, Fishnet, "Short_Numfires", 1992:2015, "FireYear", fun="count", background=0) # for count, it doesn't matter what field you use if points
 
 # Fire intensity - give background of NA so that not included in means if no fire in them
@@ -336,17 +308,17 @@ Mean_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_meanFRP", 2003:2016
 Max_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_maxFRP", 2003:2016, "FRP", fun=max,  background=NA)
 
 # Fire event size
-Mean_area_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_meanArea", 1984:2015, "Acres", fun=mean, background=NA) 
-Max_area_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_maxArea", 1984:2015, field="Acres", fun=max,  background=NA) 
+Mean_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_meanArea", 1984:2015, "Acres", fun=mean, background=NA) 
+Max_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_maxArea", 1984:2015, field="Acres", fun=max,  background=NA) 
 Mean_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_meanArea", 1992:2015, "ha", fun=mean, background=NA) 
 Max_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_maxArea", 1992:2015, "ha", fun=max, background=NA) 
 
 # Burned area
-Sum_area_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_sumArea", 1984:2015, "Acres", fun=sum, background=NA) 
+Sum_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_sumArea", 1984:2015, "Acres", fun=sum, background=NA) 
 Sum_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_sumArea", 1992:2015, "ha", fun=sum, background=NA) 
 
 # Fire seasonality
-Std_JD_MTBS<-annual_rasters(MTBS_point_parsed, Fishnet, "MTBS_stdJD", 1984:2015, "JD", fun=sd, background=NA)
+Std_JD_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_stdJD", 1984:2015, "JD", fun=sd, background=NA)
 Std_JD_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_stdJD", 2003:2016, "JD", fun=sd, background=NA) 
 Std_JD_Short<-annual_rasters(Short_parsed, Fishnet, "Short_stdJD", 1992:2015, "JD", fun=sd, background=NA) 
 # Make it Std JD * 2
@@ -361,8 +333,8 @@ Perc_fires_Short_human<-stack(Number_fires_Short_human) / stack(Number_fires_Sho
 
 results_rasterstack<-stack(stack(Number_fires_MODIS), stack(Number_fires_MTBS), stack(Number_fires_Short), stack(Mean_FRP_MODIS), stack(Max_FRP_MODIS), stack(Mean_area_MTBS), stack(Max_area_MTBS), stack(Mean_area_Short), stack(Max_area_Short), stack(Sum_area_MTBS), stack(Sum_area_Short), stack(Std2_JD_MTBS), stack(Std2_JD_MODIS), stack(Std2_JD_Short), stack(Perc_fires_Short_human))
 
-writeRaster(results_rasterstack,"0_Anthro/Data/results_rasterstack.grd", format="raster", overwrite=TRUE)
-# results_rasterstack<-stack("0_Anthro/Data/results_rasterstack.grd")							# Import sampled rasters - annual
+writeRaster(results_rasterstack,"results_rasterstack.grd", format="raster", overwrite=TRUE)
+# results_rasterstack<-stack("results_rasterstack.grd")							# Import sampled rasters - annual
 
 # stats on each variable across all years rather than annual
 Number_fires_MODIS_mean<-calc(results_rasterstack[[1:14]], mean)
@@ -390,15 +362,16 @@ Perc_fires_Short_human_mean<-calc(results_rasterstack[[337:360]], mean, na.rm=TR
 
 results_rasterstack_mean<-stack(Number_fires_MODIS_mean, Number_fires_MTBS_mean, Number_fires_Short_mean, Mean_FRP_MODIS_mean, Max_FRP_MODIS_mean, Mean_area_MTBS_mean, Max_area_MTBS_mean, Mean_area_Short_mean, Max_area_Short_mean,  Sum_area_MTBS_mean, Sum_area_Short_mean, Std_JD_MTBS_mean, Std_JD_MODIS_mean, Std_JD_Short_mean, Perc_fires_Short_human_mean)
 
-writeRaster(results_rasterstack_mean,"0_Anthro/Data/results_rasterstack_mean.grd", format="raster", overwrite=TRUE)
+
+writeRaster(results_rasterstack_mean,"results_rasterstack_mean.grd", format="raster", overwrite=TRUE)
 
 
 ######################### Get data into shape #############################
 
 # if need to reimport:
-# results_rasterstack<-stack("0_Anthro/Data/results_rasterstack.grd")							# Import sampled rasters - annual
-# results_rasterstack_mean<-stack("0_Anthro/Data/results_rasterstack_mean.grd") # Import sampled rasters - mean
-# States<-readOGR("Data/States","CONUS") 															# Import States layer
+# results_rasterstack<-stack("results_rasterstack.grd")							# Import sampled rasters - annual
+# results_rasterstack_mean<-stack("results_rasterstack_mean.grd") # Import sampled rasters - mean
+# States<-readOGR("States","CONUS") 															# Import States layer
 
 results_rasterstack_all<-stack(results_rasterstack_mean, results_rasterstack)			# Combine annual and mean sampled pyromes rasters
 results_rasterstack_mask<-mask(results_rasterstack_all, States)									# mask combined sampled pyromes rasters
@@ -421,21 +394,35 @@ samples_df<-samples_df[,-379]																				# remove 'optional' column
 
 
 # Data/Ecoregion_state/Eco_L1_pclp Ecoregions projected to match States projection and clipped to States extent
-Ecoregion<-readOGR("Data/Ecoregion_state", "Eco_L1_pclp")	
-compareCRS(Ecoregion, samples_p)											  						#TRUE
-proj4string(Ecoregion)<-crs(samples_p)
-proj4string(Ecoregion)<-crs(samples_p)
+### EPA Level I Ecoregions available here: https://www.epa.gov/eco-research/ecoregions-north-america
+# will be downloaded directly to Data folder
+Ecoregion_download <- file.path('Ecoregion', 'NA_CEC_Eco_Level1.shp')
+if (!file.exists(Ecoregion_download)) {
+	from <- "ftp://newftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l1.zip"
+	to <- paste0('Ecoregion', ".zip")
+	download.file(from, to)
+	unzip(to, exdir = 'Ecoregion')
+	unlink(to)
+	assert_that(file.exists(Ecoregion_download))
+}
+
+Ecoregion <- st_read(dsn = 'Ecoregion', layer = "NA_CEC_Eco_Level1", quiet = TRUE) %>%
+st_transform(., data_crs)
+
+
 overlay <- fortify(Ecoregion, region="NA_L1NAME")
-write.csv(overlay, "0_Anthro/Data/overlay.csv")
+write.csv(overlay, "overlay.csv")
 # overlay<-read.csv("0_Anthro/Data/overlay.csv")
 
-eco_data<-sp::over(samples_p, Ecoregion[,"NA_L1NAME"])
+Ecoregion2<-as(Ecoregion, 'Spatial')
+
+eco_data<-sp::over(samples_p, Ecoregion2[,"NA_L1NAME"])
 samples_df$ecoregion<-eco_data$NA_L1NAME
 samples_p$ecoregion<-eco_data
 
 
 ### Write and retrieve samples_df dataframe
-write.csv(samples_df, "0_Anthro/Data/samples_df.csv")
+write.csv(samples_df, "samples_df.csv")
 # samples_df<-read.csv("0_Anthro/Data/samples_df.csv")
 # names(samples_df)
 # samples_df<-samples_df[,-1]	
