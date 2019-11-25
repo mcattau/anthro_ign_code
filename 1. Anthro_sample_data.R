@@ -69,7 +69,7 @@ setNames(tolower(names(.))) %>%
 st_transform(., data_crs)
           
 
-# Creata a raster that's extent of States and 50km resolution and write into Data folder
+# Create a raster that's extent of States and 50km resolution and write into Data folder
 Fishnet<- raster(ext=extent(States), resolution=50000)		
 projection(Fishnet)<-crs(data_crs)	
 writeRaster(Fishnet,"Fishnet.grd", format="raster", overwrite=TRUE)
@@ -393,8 +393,8 @@ samples_df<-data.frame(samples_p)
 samples_df<-samples_df[,-379]																				# remove 'optional' column
 
 
-# Data/Ecoregion_state/Eco_L1_pclp Ecoregions projected to match States projection and clipped to States extent
-### EPA Level I Ecoregions available here: https://www.epa.gov/eco-research/ecoregions-north-america
+### EPA Level I Ecoregions 
+# Available here: https://www.epa.gov/eco-research/ecoregions-north-america
 # will be downloaded directly to Data folder
 Ecoregion_download <- file.path('Ecoregion', 'NA_CEC_Eco_Level1.shp')
 if (!file.exists(Ecoregion_download)) {
@@ -408,11 +408,6 @@ if (!file.exists(Ecoregion_download)) {
 
 Ecoregion <- st_read(dsn = 'Ecoregion', layer = "NA_CEC_Eco_Level1", quiet = TRUE) %>%
 st_transform(., data_crs)
-
-
-overlay <- fortify(Ecoregion, region="NA_L1NAME")
-write.csv(overlay, "overlay.csv")
-# overlay<-read.csv("0_Anthro/Data/overlay.csv")
 
 Ecoregion2<-as(Ecoregion, 'Spatial')
 

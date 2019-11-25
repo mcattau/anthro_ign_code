@@ -20,7 +20,13 @@
 
 #######################################################################################################################
 setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
-setwd("/Users/meca3122/Dropbox/0_EarthLab/US_Pyromes")
+setwd("Data/")
+
+# Projection for layers
+#EPSG:32613
+data_crs<- " +proj=utm +zone=13 +datum=WGS84 +units=m +no_defs +ellps=WGS84 "
+
+library(sf)
 library(raster)
 library(rgdal)
 library(tidyr)
@@ -54,8 +60,8 @@ library(ggpubr)
 
 # Import data
 
-# Fire variables samples at 50km resolution
-samples_df<-read.csv("0_Anthro/Data/samples_df.csv")
+# Fire variables sampled at 50km resolution - created with code "1. Anthro_sample_data", also in Github repo
+samples_df<-read.csv("Data/samples_df.csv")
 names(samples_df)
 samples_df<-samples_df[,-1]	
 
@@ -64,7 +70,23 @@ coordinates(samples_spatial)<-~x+y
 proj4string(samples_spatial)<-CRS("+init=epsg:32613")
 
 ## Import overlay - EPA Level 1 Ecoregions for mapping
-overlay <- read.csv("0_Anthro/Data/overlay.csv")
+### EPA Level I Ecoregions available here: https://www.epa.gov/eco-research/ecoregions-north-america
+# If followed "1. Anthro_sample_data", will already be in Data folder. Otherwise, can be downloaded directly to Data folder with code below
+Ecoregion_download <- file.path('Ecoregion', 'NA_CEC_Eco_Level1.shp')
+if (!file.exists(Ecoregion_download)) {
+	from <- "ftp://newftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l1.zip"
+	to <- paste0('Ecoregion', ".zip")
+	download.file(from, to)
+	unzip(to, exdir = 'Ecoregion')
+	unlink(to)
+	assert_that(file.exists(Ecoregion_download))
+}
+
+Ecoregion <- st_read(dsn = 'Ecoregion', layer = "NA_CEC_Eco_Level1", quiet = TRUE) %>%
+st_transform(., data_crs)
+Ecoregion2<-as(Ecoregion, 'Spatial')
+overlay <- fortify(Ecoregion2, region="NA_L1NAME")
+
 
 # all the mean values plus FID and ecoregion
 samples_df_mean<-samples_df[,c(1:15, 376, 379)]
