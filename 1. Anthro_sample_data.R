@@ -13,6 +13,26 @@
 # All data are clipped to the CONUS and projected to UTM Zone 13 WGS1984
 
 
+################################################################
+####################  Table of Contents  ############################
+################################################################
+
+## 1. Import and process Data
+## 2. Create annual rasters for each year, Rasterstack, and Sample @ grid
+
+
+################################################################
+###################  1. Import and Process Data  ####################
+################################################################
+
+setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
+# create a Data folder in your working directory 
+setwd("Data/")
+
+# Projection for layers
+#EPSG:32613
+data_crs<- " +proj=utm +zone=13 +datum=WGS84 +units=m +no_defs +ellps=WGS84 "
+
 # Required packages:
 library(rgdal)
 library(sp)
@@ -27,28 +47,7 @@ library(ggplot2)
 library(assertthat)
 
 
-################################################################
-####################  Table of Contents  ############################
-################################################################
-
-## 1. Import and process Data
-## 2. Create annual rasters for each year, Rasterstack, and Sample @ grid
-
-
-################################################################
-###################  1. Import and Process Data  ####################
-################################################################
-
 # Data will include US States boundaries and three fire data sources: MTBS fire perimeters, MODIS active fire data, and the FPA-FOD dataset.
-# create a Data folder in your working directory 
-
-
-setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
-setwd("Data/")
-
-# Projection for layers
-#EPSG:32613
-data_crs<- " +proj=utm +zone=13 +datum=WGS84 +units=m +no_defs +ellps=WGS84 "
 
 
 ### US States
@@ -87,8 +86,11 @@ if (!file.exists(MTBS_download)) {
 	assert_that(file.exists(MTBS_download))
 }
 
-MTBS <- st_read(dsn = 'MTBS', layer = "mtbs_perims_DD", quiet = TRUE) %>%
+MTBS2 <- st_read(dsn = 'MTBS', layer = "mtbs_perims_DD", quiet = TRUE) %>%
 st_transform(., data_crs)
+
+MTBS<-as(MTBS2, 'Spatial')
+
 
 #MTBS preprocessing
 names(MTBS)
@@ -107,15 +109,20 @@ ifelse(MTBS$StartMonth==12, 334,0
 ))))))))))))
 MTBS$JD<-MTBS$running_JD+MTBS$StartDay
 MTBS$FireYear<-MTBS$Year																				# add year column
-MTBS$FireID<-1:nrow(MTBS)																				
+MTBS$FireID<-1:nrow(MTBS)		
 
+MTBS_point1<-gCentroid(MTBS, byid=TRUE, id=MTBS$FireId)
+MTBS_point<-SpatialPointsDataFrame(MTBS_point1, MTBS@data)
 
 ### MODIS active fire data
 # Submit a request via the link below for Country->United States from Jan 2003 - Dec 2016, MODIS C6, and download into Data folder and unzip
 # https://firms.modaps.eosdis.nasa.gov/download/
 
-MODIS <- st_read(dsn = 'DL_FIRE_M6_88165', layer = "fire_archive_M6_88165", quiet = TRUE) %>%
+MODIS2 <- st_read(dsn = 'DL_FIRE_M6_88165', layer = "fire_archive_M6_88165", quiet = TRUE) %>%
 st_transform(., data_crs)
+
+MODIS<-as(MODIS2, 'Spatial')
+
 
 # MODIS preprocessing
 names(MODIS)
@@ -129,7 +136,7 @@ MODIS<-MODIS[MODIS$FireYear>=2003,]														# Remove all before 2003
  # will be downloaded directly to Data folder
  # Can be directly downloaded from here https://www.fs.usda.gov/rds/archive/catalog/RDS-2013-0009.4 as a Geodatabase: https://www.fs.usda.gov/rds/archive/products/RDS-2013-0009.4/RDS-2013-0009.4_GDB.zip
  # The below has been processed to be easier to work with:
- https://www.dropbox.com/s/xiyzlme6rt3ierx/shortfireseco073015.txt?dl=0
+ # https://www.dropbox.com/s/xiyzlme6rt3ierx/shortfireseco073015.txt?dl=0
    
    
 Short <- read.table("Short_Data/ShortDB.txt", sep=",",
@@ -227,8 +234,7 @@ range(MODIS$FireYear)
 MODIS_parsed<-parse_vector(MODIS, "MODIS", 2003:2016)
 
 range(MTBS$FireYear)
-MTBS_parsed<-parse_vector(MTBS, "MTBS", 1984:2015)
-# MTBS_point_parsed<-parse_vector(MTBS_point, "MTBS_point", 1984:2015)
+MTBS_parsed<-parse_vector(MTBS_point, "MTBS", 1984:2015)
 
 range(Short$FireYear)
 Short_parsed<-parse_vector(Short, "Short", 1992:2015)

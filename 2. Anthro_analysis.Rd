@@ -20,7 +20,7 @@
 
 #######################################################################################################################
 setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
-setwd("Data/")
+# setwd("Data/")
 
 # Projection for layers
 #EPSG:32613
@@ -133,33 +133,21 @@ ggarrange(plot_char(10), plot_char(11),  plot_char(12),
 plot_char(13),  plot_char(14),  plot_char(15),   
 ncol=3, nrow=2, legend=c("right"))
 
-# Demonstrate that variables not redundant
-# Stats on this
-# compare two unpaired groups - Unpaired t for Gaussian and Mann-Whitney for non-Gaussian
-# compare three+ unmatched groups - One-way ANOVA for Gaussian and Kruskal-Wallis test for non-Gaussian (if use means) - this
-# compare three+ matched groups -repeated measures ANOVA for Gaussian and Friedman test for non-Gaussian (if use annual values)
-# (Could use ks.test to see if gaussian (Kolmogorov-Smirnov Test)) - just assume not Gaussian
 
-names(samples_df[,c(1:15, 376)])
+## Demonstrate that variables not redundant
 
 # Number of fires - MODIS, Short, MTBS
 num_fires_long<-gather(samples_df[,c(1:3, 376)], key=variable, value=value, -FID)
 num_fires_long$group<-ifelse(substr(num_fires_long$variable, 14, 18)=="MODIS", "MODIS", ifelse(substr(num_fires_long$variable, 14, 17)=="MTBS", "MTBS", ifelse(substr(num_fires_long$variable, 14, 18)=="Short", "FPA-FOD",-9999)))
 num_fires_long$group<-as.factor(num_fires_long$group)
 
-library("ggpubr")
-ggboxplot(num_fires_long, x = "group", y = "value", 
-          color = "group", palette = c("#00AFBB", "#E7B800", "#FC4E07"),
-          ylab = "Number of Fires", xlab = "Source")
-
 kruskal.test(value ~ group, data = num_fires_long)
-# P ***, so different
+# P < 0.001
 # Pairwise comparisons using Wilcoxon rank sum test 
 pairwise.wilcox.test(num_fires_long$value, 
                          num_fires_long$group, 
                           p.adjust.method="none")
-# All ***, so all diff from one another
-
+# All p < 0.001
 
 # Max Mean and Sum area - MTBS and Short
 ## Mean Area
@@ -168,7 +156,7 @@ mean_area_long$group<-ifelse(substr(mean_area_long$variable, 11, 14)=="MTBS", "M
 mean_area_long$group<-as.factor(mean_area_long$group)
 unique(mean_area_long$group)
 wilcox.test(mean_area_long$value~mean_area_long$group)
-# P ***, so diff
+# P < 0.001
 
 ## Max Area
 max_area_long<-gather(samples_df[,c(7, 9, 376)], key=variable, value=value, -FID)
@@ -176,7 +164,7 @@ max_area_long$group<-ifelse(substr(max_area_long$variable, 10, 13)=="MTBS", "MTB
 max_area_long$group<-as.factor(max_area_long$group)
 unique(max_area_long$group)
 wilcox.test(max_area_long$value~max_area_long$group)
-# P ***, so diff
+# P < 0.001
 
 ## Sum Area
 sum_area_long<-gather(samples_df[,c(10, 11, 376)], key=variable, value=value, -FID)
@@ -184,8 +172,7 @@ sum_area_long$group<-ifelse(substr(sum_area_long$variable, 10, 13)=="MTBS", "MTB
 sum_area_long$group<-as.factor(sum_area_long$group)
 unique(sum_area_long$group)
 wilcox.test(sum_area_long$value~sum_area_long$group)
-# P ***, so diff
-
+# P < 0.001
 	
 # Seasonality - MTBS, MODIS, and Short
 season_long<-gather(samples_df[,c(12, 13, 14, 376)], key=variable, value=value, -FID)
@@ -193,12 +180,12 @@ season_long$group<-ifelse(substr(season_long$variable, 8, 12)=="MODIS", "MODIS",
 season_long$group<-as.factor(season_long$group)
 unique(season_long$group)
 kruskal.test(value ~ group, data = season_long)
-# P ***, so different
+# P < 0.001
 # Pairwise comparisons using Wilcoxon rank sum test 
 pairwise.wilcox.test(season_long$value, 
                          season_long$group, 
                           p.adjust.method="none")
-# All ***, so all diff from one another
+# All # P < 0.001
 
 # Max and mean  FRP = only one source - MODIS
 # % Anthro = only one source - Short
@@ -383,6 +370,7 @@ for (i in 1:15){
 	ifelse(lm_summary_list1[[i]]$coefficients[8]<=0.01, "***", NA))))
 }	
 
+cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7")
 
 ### Figure 1
 ggarrange(make_gg_time_fig(4, 1), make_gg_time_fig(9, 2),  make_gg_time_fig(3, 3), 
@@ -409,7 +397,6 @@ make_gg_time(13), make_gg_time(14),  make_gg_time(15),
 ncol=3, nrow=5, legend=c("none"))
 
 
-cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7")
 
 
 
@@ -730,7 +717,79 @@ make_gg1_rev(14, 17, 1), make_gg1_rev(14, 18, 2),
 ncol=2, nrow=4, legend=c("none"))
 
 
+# Adam code below
+means_sds <- samples_ign_mean %>%
+  group_by(ign) %>%
+  summarise(mean_frp = median(log(Mean_FRP_MODIS_mean), na.rm=T),
+            sd_frp = sd(log(Mean_FRP_MODIS_mean), na.rm = T),
+            mean_area = median(log(Mean_area_Short_mean)),
+            sd_area = sd(log(Mean_area_Short_mean)),
+            mean_jd = median(log(Std_JD_Short_mean2), na.rm=T),
+            sd_jd = sd(log(Std_JD_Short_mean2), na.rm = T),
+            mean_n = median(log(Number_fires_Short_mean2), na.rm=T),
+            sd_n = sd(log(Number_fires_Short_mean2), na.rm = T)) %>%
+  ungroup %>%
+  mutate(lowerf = mean_frp - sd_frp,
+         upperf = mean_frp + sd_frp,
+         lowera = mean_area - sd_area,
+         uppera = mean_area + sd_area,
+         lowerj = mean_jd - sd_jd,
+         upperj = mean_jd + sd_jd,
+         lowern = mean_n - sd_n,
+         uppern = mean_n + sd_n)
 
+p1 <- ggplot(samples_ign_mean, aes(x=(Mean_area_Short_mean), 
+                             y=(Mean_FRP_MODIS_mean),
+                             color = ign)) +
+  geom_point(alpha = 0.4, size = 1) +
+  geom_errorbar(data = means_sds, width=0, #alpha = .2,
+                aes(x = exp(mean_area),
+                    ymin = exp(mean_frp - sd_frp),
+                    ymax = exp(mean_frp + sd_frp)),
+                inherit.aes = FALSE) +
+  geom_errorbarh(data = means_sds, height=0, #alpha = .2,
+                 aes(y = exp(mean_frp),
+                    xmin = exp(lowera),
+                    xmax = exp(mean_area + sd_area)),
+                inherit.aes = FALSE)+
+  geom_point(data=means_sds, alpha = .2, size=1.5, aes(x=exp(mean_area), y=exp(mean_frp)), inherit.aes = FALSE) +
+   ggtitle("a.")      +
+   scale_y_continuous(trans = "log10") +
+   scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) + 
+  scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  ylab("Average Intensity (MW)") +
+  xlab("Average Fire Size (ha)") +
+  #annotation_logticks()  +
+  theme_pubr();p1
+
+
+p2 <- ggplot(samples_ign_mean, aes(x=Number_fires_Short_mean2, 
+                     y=Std_JD_Short_mean2,
+                     color = ign)) +
+  geom_point(alpha = 0.4, size = 1) +
+ 
+  geom_errorbar(data = means_sds, width=0, #alpha = .2,
+                aes(x = exp(mean_n),
+                    ymin = exp(mean_jd - sd_jd),
+                    ymax = exp(mean_jd + sd_jd)),
+                inherit.aes = FALSE) +
+  geom_errorbarh(data = means_sds, height=0, #alpha = .2,
+                 aes(y = exp(mean_jd),
+                     xmin = exp(lowern),
+                     xmax = exp(mean_n + sd_n)),
+                 inherit.aes = FALSE)+
+  ggtitle("b.")              + 
+  geom_point(data=means_sds, alpha = .2, size=1.5, aes(x=exp(mean_n), y=exp(mean_jd)), inherit.aes = FALSE) +
+  scale_y_continuous(trans = "log10") +
+  scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
+                labels = trans_format("log10", math_format(10^.x))) +   scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  xlab("Fire frequency (n fires)") +
+  ylab("Season Length (days)") +
+  #annotation_logticks()  +
+  theme_pubr();p2
+
+ggarrange(p1,p2, ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
 
 ######################################################
 ##### 5. Characterizing fire~ign_ecoregion ###################
