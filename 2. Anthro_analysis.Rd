@@ -19,7 +19,7 @@
 
 #######################################################################################################################
 setwd("/Users/megancattau 1/Dropbox/0_EarthLab/US_Pyromes")
-setwd("Data/")
+setwd("anthro_ign_code/")
 
 # Projection for layers
 #EPSG:32613
@@ -68,24 +68,13 @@ samples_spatial<-samples_df
 coordinates(samples_spatial)<-~x+y
 proj4string(samples_spatial)<-CRS("+init=epsg:32613")
 
-## Import overlay - EPA Level 1 Ecoregions for mapping
-### EPA Level I Ecoregions available here: https://www.epa.gov/eco-research/ecoregions-north-america
-# If followed "1. Anthro_sample_data", will already be in Data folder. Otherwise, can be downloaded directly to Data folder with code below
-Ecoregion_download <- file.path('Ecoregion', 'NA_CEC_Eco_Level1.shp')
-if (!file.exists(Ecoregion_download)) {
-	from <- "ftp://newftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l1.zip"
-	to <- paste0('Ecoregion', ".zip")
-	download.file(from, to)
-	unzip(to, exdir = 'Ecoregion')
-	unlink(to)
-	assert_that(file.exists(Ecoregion_download))
-}
-
-Ecoregion <- st_read(dsn = 'Ecoregion', layer = "NA_CEC_Eco_Level1", quiet = TRUE) %>%
+## Import overlay - EPA Level 1 Ecoregions clipped to States, in Github repo
+Ecoregion <- st_read(dsn = 'Ecoregion_state', layer = "Eco_L1_pclp", quiet = TRUE) %>%
+filter(!(NAME %in% c("Alaska", "Hawaii", "Puerto Rico"))) %>%
 st_transform(., data_crs)
 Ecoregion2<-as(Ecoregion, 'Spatial')
+    
 overlay <- fortify(Ecoregion2, region="NA_L1NAME")
-
 
 # all the mean values plus FID and ecoregion
 samples_df_mean<-samples_df[,c(1:15, 376, 379)]
@@ -405,15 +394,14 @@ ncol=3, nrow=5, legend=c("none"))
 ########################################################################
 
 names(samples_df)
-nrow(samples_df[!is.na(samples_df$anthro),]) #3217
+nrow(samples_df[!is.na(samples_df$anthro),]) #3229
 nrow(samples_df)
 
 hist_table<-count(samples_df, vars = anthro)
 hist_table$perc<-hist_table$n/sum(hist_table$n)
-sum(hist_table$n)
 #24% not dominated by either anthro or lightning
 # 65% are anthro-dominated
-# 10% lightning-dominated
+# 9% lightning-dominated
 # 1% no fire
 
 # Figure S3
@@ -941,7 +929,7 @@ for(i in c(3, 8, 9, 11, 14, 15)){
 }
 
 
-  	###	if(length(unique(samples_ign_mean_eco_each[[n]][which(!is.na(samples_ign_mean_eco_each[[n]]$ign)),]$ign))==2){
+###	if(length(unique(samples_ign_mean_eco_each[[n]][which(!is.na(samples_ign_mean_eco_each[[n]]$ign)),]$ign))==2){
 
 # Fit linear model for each ecoregion
 library(nlme)
@@ -1086,7 +1074,9 @@ for (i in 1:150){
 
 names(slopes_eco)<-c("Ecoregion", "Human", "Lightning", "Higher", "Percent_change_Human", "Percent_change_Lightning", "Human2", "Lightning2")
 
-write.table(slopes_eco, "0_Anthro/Results/slopes_eco.txt")
+
+slopes_eco
+# write.table(slopes_eco, "0_Anthro/Results/slopes_eco.txt")
 
 
 
