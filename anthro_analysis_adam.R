@@ -1167,18 +1167,18 @@ make_gg_eco_time_light<-function(char){
 
 
 ### Figure - not used
-#dev.off() 
+#dev.off()
 # ggarrange(make_gg_eco_time_light(4), make_gg_eco_time_human(4), 
-make_gg_eco_time_light(8), make_gg_eco_time_human(8), 
-make_gg_eco_time_light(3), make_gg_eco_time_human(3), 
-make_gg_eco_time_light(14), make_gg_eco_time_human(14), 
-ncol=2, nrow=4, legend=c("right"))
-
-# ggarrange(make_gg_eco_time(4),
-make_gg_eco_time(8),
-make_gg_eco_time(3),
-make_gg_eco_time(14),
-ncol=1, nrow=4, legend=c("right"))
+# make_gg_eco_time_light(8), make_gg_eco_time_human(8), 
+# make_gg_eco_time_light(3), make_gg_eco_time_human(3), 
+# make_gg_eco_time_light(14), make_gg_eco_time_human(14), 
+# ncol=2, nrow=4, legend=c("right"))
+# 
+# # ggarrange(make_gg_eco_time(4),
+# make_gg_eco_time(8),
+# make_gg_eco_time(3),
+# make_gg_eco_time(14),
+# ncol=1, nrow=4, legend=c("right"))
 
 
 ##########################################################################################
@@ -1282,13 +1282,49 @@ for (i in 1:15) {
 plot_segmented<- function(number){
   for (i in number:number){
     par("mar"=c(5,5,1,1))
-    plot(data_list[[i]]$anthro, data_list[[i]]$depend.var, xlab="Proportion anthropogenic ignitions", ylab=units_simple[i], cex.lab=1.5, col="lightgray", main=names_no_units[i])
+    plot(data_list[[i]]$anthro, data_list[[i]]$depend.var, 
+         xlab="Proportion anthropogenic ignitions", 
+         ylab=units_simple[i], 
+         cex.lab=1.5, col="lightgray", 
+         main=names_no_units[i])
     if (num_breaks[i]=="1"){
       plot(segmented_list[[i]], rug=FALSE, add=TRUE)
       lines(segmented_list[[i]], col="blue")
     } else if (num_breaks[i]=="0"){
       abline(regression_list[[i]])		}
   }
+}
+
+ggplot_segmented<- function(i){
+    if (num_breaks[i]=="1"){
+      ggplot(data_list[[i]], aes(x=anthro, y=depend.var)) +
+        geom_point(alpha = 0.5, color = "grey60") +
+        xlab("Proportion anthropogenic ignitions") +
+        ylab(units_simple[i]) +
+        ggtitle(names_no_units[i]) +
+        scale_y_continuous(trans = "log10")+
+        theme_pubr() +
+        geom_line(aes(y = predict(segmented_list[[i]])), lwd=1)+
+        # geom_segment(aes(x = segmented_list[[i]]$psi[2] - segmented_list[[i]]$psi[3],
+        #              xend = segmented_list[[i]]$psi[2] + segmented_list[[i]]$psi[3],
+        #              y = 1, yend=1),
+        #              color = "blue", lwd = 1.5) +
+        # geom_point(aes(x = segmented_list[[i]]$psi[2],y=1), color = "blue", size = 3)
+        geom_vline(xintercept = segmented_list[[i]]$psi[2], lty =1) +
+        geom_vline(xintercept = segmented_list[[i]]$psi[2]- segmented_list[[i]]$psi[3], lty =2) +
+        geom_vline(xintercept = segmented_list[[i]]$psi[2]+ segmented_list[[i]]$psi[3], lty =2) 
+        
+    } else if (num_breaks[i]=="0"){
+      ggplot(data_list[[i]], aes(x=anthro, y=depend.var)) +
+        geom_point(alpha = 0.5, color = "grey60") +
+        xlab("Proportion anthropogenic ignitions") +
+        ylab(units_simple[i]) +
+        ggtitle(names_no_units[i]) +
+        scale_y_continuous(trans = "log10")+
+        theme_pubr() +
+        geom_line(aes(y = predict(regression_list[[i]])), lwd=1)
+        	}
+  
 }
 
 # All variables
@@ -1304,6 +1340,17 @@ for (i in c(4, 8, 3, 14)){
   plot_segmented(i)
 }
 
+# ggplot figure 3
+ggarrange(
+  ggplot_segmented(4),
+  ggplot_segmented(8),
+  ggplot_segmented(3),
+  ggplot_segmented(14),
+  nrow=2,
+  ncol = 2
+  
+)
+ggsave("figure_3_ggplotted_vlines.png")
 slopes[c(4, 8, 3, 14)]
 slopes2[c(4, 8, 3, 14)]
 
