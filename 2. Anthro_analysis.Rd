@@ -365,7 +365,7 @@ for (i in 1:15){
 cbPalette <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#CC79A7")
 
 ### Figure 1
-ggarrange(make_gg_time_fig(4, 1), make_gg_time_fig(9, 2),  make_gg_time_fig(3, 3), 
+ggarrange(make_gg_time_fig(4, 1), make_gg_time_fig(8, 2),  make_gg_time_fig(3, 3), 
 make_gg_time_fig(14, 4), make_gg_time_fig(15, 5), 
 ncol=2, nrow=3, legend=c("none"))
 
