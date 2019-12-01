@@ -831,7 +831,8 @@ make_gg_eco<-function(char){
 }
 
 ### Figure S6
-ggarrange(make_gg_eco(1), make_gg_eco(2), make_gg_eco(3), make_gg_eco(4), make_gg_eco(5), make_gg_eco(6), make_gg_eco(7), make_gg_eco(8), make_gg_eco(9), ncol=3, nrow=3, legend=c("right"), common.legend=TRUE)
+ggarrange(make_gg_eco(1), make_gg_eco(2), make_gg_eco(3), make_gg_eco(4), make_gg_eco(5), make_gg_eco(6), ncol=3, nrow=2, legend=c("none"))
+ggarrange(make_gg_eco(7), make_gg_eco(8), make_gg_eco(9), ncol=3, nrow=2, legend=c("none"))
 ggarrange(make_gg_eco(10),make_gg_eco(11),  make_gg_eco(12), make_gg_eco(13), 
           make_gg_eco(14), make_gg_eco(15), ncol=3, nrow=2, legend="none")
 
