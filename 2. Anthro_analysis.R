@@ -70,7 +70,6 @@ proj4string(samples_spatial)<-CRS("+init=epsg:32613")
 
 ## Import overlay - EPA Level 1 Ecoregions clipped to States, in Github repo
 Ecoregion <- st_read(dsn = 'Ecoregion_state', layer = "Eco_L1_pclp", quiet = TRUE) %>%
-  #filter(!(NAME %in% c("Alaska", "Hawaii", "Puerto Rico"))) %>%
   st_transform(., data_crs)
 Ecoregion2<-as(Ecoregion, 'Spatial')
 
