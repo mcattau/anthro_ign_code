@@ -671,8 +671,8 @@ eco_plot<-function(data){
 eco_plot(samples_df)
 
 # Eco names 3, 7, 9, 10 dominated just by human ignitions
-# remove Water and NA
-eco_names<-unique(samples_df$ecoregion)[c(1, 7, 3, 9, 5, 2, 4, 11, 10, 12)]
+# remove Water and NA (7, 8)
+eco_names<-unique(samples_df$ecoregion)[c(1, 6, 3, 9, 5, 2, 4, 11, 10, 12)]
 
 
 
@@ -773,7 +773,7 @@ for (i in 1:15){
 
 ### Table S5
 fire_characteristics_ign_eco
-# write.table(fire_characteristics_ign_eco, "0_Anthro/Results/fire_characteristics_ign_eco.txt")
+# write.table(fire_characteristics_ign_eco, "Results/fire_characteristics_ign_eco.txt")
 
 # for mapping:
 # Mean values rather than +/- sd as above
