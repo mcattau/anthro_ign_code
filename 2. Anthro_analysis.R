@@ -187,7 +187,8 @@ pairwise.wilcox.test(season_long$value,
 # Characteristics for human vs Lightning areas
 # Dominated by either human or lighting ignitions when one cause accounts for more than 75% of the number of fires in a given 50 × 50-km grid cell. 
 samples_df$anthro<-ifelse(samples_df$Perc_human_Short_mean>=0.75, 1, 
-                          ifelse(samples_df$Perc_human_Short_mean<=0.25, 2, 0))
+                          ifelse(samples_df$Perc_human_Short_mean<=0.25, 2, 
+                          0))
 
 samples_df$ign<-ifelse(samples_df$anthro==1, "Human", ifelse(samples_df$anthro==2, "Lightning", -9999))
 
@@ -304,7 +305,7 @@ for (i in 1:15){
 }
 
 # Slopes of ign groups
-slopes1<-data.frame(matrix(NA, nrow = 15, ncol = 3))
+slopes1<-data.frame(matrix(NA, nrow = 15, ncol = 2))
 slopes1[,1]<-names_vector
 
 for (i in 1:15){
@@ -315,7 +316,7 @@ for (i in 1:15){
                                              ifelse(lm_summary_list1[[i]]$coefficients[8]<=0.01, "***", NA)))))
 }
 
-names(slopes1)<-c("Fire characteristic", "Slope", "Adjusted R2")
+names(slopes1)<-c("Fire characteristic", "Slope")
 
 # Percent change over time period
 initial<-vector("numeric", length=15)
@@ -334,8 +335,9 @@ slopes1$perc_change<-round(perc_change)
 names(slopes1)[3]<-"Percent change"
 
 for (i in 1:15){
-  slopes1[i, 3]<-round(lm_summary_list1[[i]], 4)
+  slopes1[i, 4]<-round(as.numeric(lm_summary_list1[[i]][9]),4)
 }
+names(slopes1)[4]<-"Adjusted r2"
 
 
 ### Table S1
@@ -739,9 +741,6 @@ for(i in 1:15){
 
 # samples_ign_mean<-samples_ign[,c(1:15, 387, 389)]
 
-# Stats on this
-# compare two unpaired groups - Unpaired t for Gaussian and Mann-Whitney for non-Gaussian
-# (Could use ks.test to see if gaussian (Kolmogorov-Smirnov Test)) - just assume not Gaussian
 
 # list for each 
 samples_ign_mean_eco_each<-vector("list", 10)
