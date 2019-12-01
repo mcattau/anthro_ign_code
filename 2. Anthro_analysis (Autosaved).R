@@ -304,7 +304,7 @@ for (i in 1:15){
 }
 
 # Slopes of ign groups
-slopes1<-data.frame(matrix(NA, nrow = 15, ncol = 3))
+slopes1<-data.frame(matrix(NA, nrow = 15, ncol = 2))
 slopes1[,1]<-names_vector
 
 for (i in 1:15){
@@ -315,7 +315,7 @@ for (i in 1:15){
                                              ifelse(lm_summary_list1[[i]]$coefficients[8]<=0.01, "***", NA)))))
 }
 
-names(slopes1)<-c("Fire characteristic", "Slope", "Adjusted R2")
+names(slopes1)<-c("Fire characteristic", "Slope")
 
 # Percent change over time period
 initial<-vector("numeric", length=15)
@@ -334,8 +334,9 @@ slopes1$perc_change<-round(perc_change)
 names(slopes1)[3]<-"Percent change"
 
 for (i in 1:15){
-  slopes1[i, 3]<-round(lm_summary_list1[[i]], 4)
+  slopes1[i, 4]<-round(as.numeric(lm_summary_list1[[i]][9]),4)
 }
+names(slopes1)[4]<-"Adjusted r2"
 
 
 ### Table S1
