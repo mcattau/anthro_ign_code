@@ -937,28 +937,33 @@ for(i in c(3, 8, 9, 11, 14, 15)){
 # Fit linear model for each ecoregion
 library(nlme)
 
+
 lm_slope_list_human_eco<-vector("list", 15)
-for (i in 1:15){
+for (i in c(1:11, 13:15)){
   for (n in 1:10){
-    if(length(unique(fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],]$ign))==4){
-      lm_slope_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],], na.action=na.omit))$coefficients[14])
-    } else{
-      lm_slope_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[5])
-    } 
+  	lm_slope_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[5])
   }
 }
 
+for (i in 12){
+  for (n in c(1:2, 4:10)){
+  	lm_slope_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[5])
+  }
+}
 
 lm_sig_list_human_eco<-vector("list", 15)
-for (i in 1:15){
+for (i in c(1:11, 13:15)){
   for (n in 1:10){
-    if(length(unique(fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],]$ign))==4){
-      lm_sig_list_human_eco[[i]][n]<-summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],], na.action=na.omit))$coefficients[23]
-    } else{
-      lm_sig_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[8])
-    } 
+  	lm_sig_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[8])
   }
 }
+
+for (i in 12){
+  for (n in c(1:2, 4:10)){
+  	lm_sig_list_human_eco[[i]][n]<-(summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[8])
+  }
+}
+
 
 lm_slope_list_lightning_eco<-vector("list", 15)
 for (i in 1:15){
@@ -987,60 +992,6 @@ lm_sig_human_eco<-unlist(lm_sig_list_human_eco)
 lm_slope_lightning_eco<-as.numeric(unlist(lm_slope_list_lightning_eco))
 lm_sig_lightning_eco<-as.numeric(unlist(lm_sig_list_lightning_eco))
 lm_sig_lightning_eco<-ifelse(lm_sig_lightning_eco=="NaN", 1, lm_sig_lightning_eco)
-
-
-# Percent change for each over time period
-# Anthro ignitions
-initial_human<-vector("list", 15)
-final_human<-vector("list", 15)
-change_human<-vector("list", 15)
-perc_change_human<-vector("list", 15)
-
-for (i in 1:15){
-  for (n in 1:10){
-    initial_human[[i]][n]<-summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n]& fire_chars[[i]]$ign=="Human",], na.action=na.omit))$coefficients[1]
-    final_human[[i]][n]<-stats::predict.lm(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n] & fire_chars[[i]]$ign=="Human",], na.action=na.omit)[[1]], newdata=data.frame(time=(max(fire_chars[[i]]$time)-min(fire_chars[[i]]$time))))
-    change_human[[i]][n]<-final_human[[i]][n]-initial_human[[i]][n]
-    perc_change_human[[i]][n]<-(change_human[[i]][n]/initial_human[[i]][n])*100
-  }
-}
-
-
-initial_light<-vector("list", 15)
-final_light<-vector("list", 15)
-
-for (i in 1:15){
-  for (n in 1:10){
-    if(length(unique(fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],]$ign))==4){
-      initial_light[[i]][n]<-summary(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],], na.action=na.omit))$coefficients[3]
-      final_light[[i]][n]<-stats::predict.lm(lmList(value ~ time | ign, data=fire_chars[[i]][fire_chars[[i]]$ecoregion==eco_names[n],], na.action=na.omit)[[3]], newdata=data.frame(time=(max(fire_chars[[i]]$time)-min(fire_chars[[i]]$time))))
-    } else{		
-      initial_light[[i]][n]<--9999
-      final_light[[i]][n]<--9999
-    }	
-  }
-}
-
-
-change_light<-vector("list", 15)
-perc_change_light<-vector("list", 15)
-
-for (i in 1:15){
-  for (n in 1:10){
-    change_light[[i]][n]<--9999
-    perc_change_light[[i]][n]<-9999
-  }
-}
-
-for (i in 1:15){
-  for (n in (c(2, 5, 7, 9))){
-    change_light[[i]][n]<-final_light[[i]][n]-initial_light[[i]][n]
-    perc_change_light[[i]][n]<-(change_light[[i]][n]/initial_light[[i]][n])*100	
-  }
-}
-
-perc_change_human_eco<-unlist(perc_change_human)
-perc_change_lightning_eco<-unlist(perc_change_light)
 
 
 # Slopes of ign groups by ecoregion
@@ -1081,7 +1032,7 @@ names(slopes_eco)<-c("Ecoregion", "Human", "Lightning", "Higher", "Percent_chang
 slopes_eco
 # write.table(slopes_eco, "0_Anthro/Results/slopes_eco.txt")
 
-
+round(slopes_eco[,5],2)
 
 change_ign_eco_map<-slopes_eco[,c(1,4, 7,8)]
 change_ign_eco_map$char<-rep(names_vector, each=10)
@@ -1105,6 +1056,7 @@ make_gg_eco_time<-function(character){
   ggplot(new_df_time[[character]],  aes(x, y)) + 
     coord_equal() +
     geom_point(aes(color = factor(Higher))) +  
+    ggtitle(paste0(letters[character], ". ", names_vector[character]))+
     scale_color_manual(values = c("Dominated by human ign only"="firebrick4", "Human" = "firebrick2", "Human, not sig"="bisque2", "Lightning"="dodgerblue3", "Lightning, not sig"="slategray2"))+
     labs(colour="Ignition source with higher value")+
     theme(plot.title = element_text(hjust = 0.5))+
@@ -1115,23 +1067,26 @@ make_gg_eco_time<-function(character){
 
 
 ### Figure S7
-ggarrange(make_gg_eco_time(1)+ggtitle(names_vector[1]), 
-          make_gg_eco_time(2)+ggtitle(names_vector[2]), 
-          make_gg_eco_time(3)+ggtitle(names_vector[3]), 
-          make_gg_eco_time(4)+ggtitle(names_vector[4]),  
-          make_gg_eco_time(5)+ ggtitle(names_vector[5]), 
-          make_gg_eco_time(6)+	 ggtitle(names_vector[6]), 
-          make_gg_eco_time(7)+	 ggtitle(names_vector[7]),  
-          make_gg_eco_time(8)+	 ggtitle(names_vector[8]),  
-          make_gg_eco_time(9)+	 ggtitle(names_vector[9]), 
-          ncol=3, nrow=3, legend=c("none"))
-ggarrange(make_gg_eco_time(10)+ggtitle(names_vector[10]), 
-          make_gg_eco_time(11)+ggtitle(names_vector[11]), 
-          make_gg_eco_time(12)+ggtitle(names_vector[12]), 
-          make_gg_eco_time(13)+ggtitle(names_vector[13]), 
-          make_gg_eco_time(14)+ggtitle(names_vector[14]),  
-          make_gg_eco_time(15)+ ggtitle(names_vector[15]),  
+ggarrange(make_gg_eco_time(1), 
+          make_gg_eco_time(2), 
+          make_gg_eco_time(3), 
+          make_gg_eco_time(4),  
+          make_gg_eco_time(5), 
+          make_gg_eco_time(6), 
           ncol=3, nrow=2, legend=c("none"))
+          
+ ggarrange(make_gg_eco_time(7),  
+          make_gg_eco_time(8),  
+          make_gg_eco_time(9), 
+          make_gg_eco_time(10), 
+          make_gg_eco_time(11), 
+          make_gg_eco_time(12), 
+         ncol=3, nrow=2, legend=c("none"))
+                    
+   ggarrange(make_gg_eco_time(13), 
+          make_gg_eco_time(14),  
+          make_gg_eco_time(15),  
+          ncol=3, nrow=1, legend=c("none"))
 
 
 
