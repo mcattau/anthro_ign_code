@@ -1143,14 +1143,6 @@ make_gg_eco_time_light<-function(char){
 ########### 7. Segmentation - Relationship between anthropogenic ignitions and fire physical characteristics ##########
 ##########################################################################################
 
-################################
-# ANCOVA: http://r-eco-evo.blogspot.com/2011/08/comparing-two-regression-slopes-by.html
-#size_SL<-aov(Std_JD_MTBS_mean~Max_area_MTBS_mean*anthro, data=samples_df)
-# summary(size_SL)
-# Ancova useful for predicting effect of group membership on response while controlling for another variable, mixed model might be better here bc we want to see effect of variables and group membership
-################################
-
-
 ######## Human effects on different variables
 names(samples_df)	
 
@@ -1193,8 +1185,6 @@ davies.significance[[i]]<-"TBD"
 adj.r.square[i]<-"TBD"
 slopes[i]<-"TBD"
 slopes2[i]<-"TBD"
-
-######## HERE #######
 
 # Check it
 num_breaks
