@@ -343,8 +343,6 @@ names(slopes1)[4]<-"Adjusted r2"
 ### Table S1
 slopes1
 
-# write.table(slopes1, "0_Anthro/Results/slopes1.txt")
-
 
 make_gg_time_fig<-function(char, let){
   ggplot(data = grouped_list_time[[char]], aes(x = year, y = value_by_year)) +
@@ -442,8 +440,6 @@ for(i in 1:2){
 fire_characteristics_ign[,1]<-names(samples_ign_mean[c(1:15)])
 
 # Stats on this
-# compare two unpaired groups - Unpaired t for Gaussian and Mann-Whitney for non-Gaussian
-# (Could use ks.test to see if gaussian (Kolmogorov-Smirnov Test)) - just assume not Gaussian
 sig_char<-vector("numeric", length=15)
 for (i in 1:15){
   sig_char[i]<-round(wilcox.test(samples_ign_mean[,i]~samples_ign_mean$ign)$p.value, 3)
@@ -454,7 +450,7 @@ fire_characteristics_ign$sig<-ifelse(sig_char<=0.001, "***",
 
 ### Table S2
 fire_characteristics_ign
-#write.table(fire_characteristics_ign, "0_Anthro/Results/2. TableS2_char~ign/fire_characteristics_ign.txt")
+
 
 plot_ign_char<-function(x_char, xlim_2){
   ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
@@ -592,7 +588,6 @@ slope_stuff$perc_change_lightning<-round(perc_change_lightning,2)
 
 ### Table S3
 slope_stuff
-# write.table(slope_stuff, "0_Anthro/Results/slope_stuff.txt")
 
 # plots of those data
 make_gg<-function(char){
@@ -773,7 +768,6 @@ for (i in 1:15){
 
 ### Table S5
 fire_characteristics_ign_eco
-# write.table(fire_characteristics_ign_eco, "Results/fire_characteristics_ign_eco.txt")
 
 # for mapping:
 # Mean values rather than +/- sd as above
@@ -932,8 +926,6 @@ for(i in c(3, 8, 9, 11, 14, 15)){
 }
 
 
-###	if(length(unique(samples_ign_mean_eco_each[[n]][which(!is.na(samples_ign_mean_eco_each[[n]]$ign)),]$ign))==2){
-
 # Fit linear model for each ecoregion
 library(nlme)
 
@@ -1029,8 +1021,8 @@ for (i in 1:150){
 names(slopes_eco)<-c("Ecoregion", "Human", "Lightning", "Higher", "Percent_change_Human", "Percent_change_Lightning", "Human2", "Lightning2")
 
 
+### Table S6
 slopes_eco
-# write.table(slopes_eco, "0_Anthro/Results/slopes_eco.txt")
 
 round(slopes_eco[,5],2)
 
@@ -1095,48 +1087,6 @@ for (i in 1:15){
   limits[[i]]<-c(ifelse(min(change_ign_eco_map_list1[[i]]$Human2, na.rm=TRUE)<min(change_ign_eco_map_list1[[i]]$Lightning2, na.rm=TRUE), min(change_ign_eco_map_list1[[i]]$Human2, na.rm=TRUE), min(change_ign_eco_map_list1[[i]]$Lightning2, na.rm=TRUE)), ifelse(max(change_ign_eco_map_list1[[i]]$Human2, na.rm=TRUE)>max(change_ign_eco_map_list1[[i]]$Lightning2, na.rm=TRUE), max(change_ign_eco_map_list1[[i]]$Human2, na.rm=TRUE), max(change_ign_eco_map_list1[[i]]$Lightning2, na.rm=TRUE)))
 }
 
-
-make_gg_eco_time_human<-function(char){
-  ggplot(new_df_time[[char]],  aes(x, y)) + 
-    coord_equal() +
-    geom_point(aes(color = Human2)) +  
-    scale_color_gradient(low="yellow", high="red", limits=c(limits[[char]]))+
-    labs(colour=units_simple[[char]])+
-    theme(plot.title = element_text(hjust = 0.5))+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
-    geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
-}
-
-# 	ggtitle(names_no_units[char]) +
-# after "red", limits=c(limits[[char]]))+
-
-make_gg_eco_time_light<-function(char){
-  ggplot(new_df_time[[char]],  aes(x, y)) + 
-    coord_equal() +
-    geom_point(aes(color = Lightning2)) +  
-    scale_color_gradient(low="yellow", high="red", limits=c(limits[[char]]))+
-    labs(colour=units_simple[[char]])+
-    theme(plot.title = element_text(hjust = 0.5))+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
-    geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
-}
-
-
-### Figure - not used
-#dev.off()
-# ggarrange(make_gg_eco_time_light(4), make_gg_eco_time_human(4), 
-# make_gg_eco_time_light(8), make_gg_eco_time_human(8), 
-# make_gg_eco_time_light(3), make_gg_eco_time_human(3), 
-# make_gg_eco_time_light(14), make_gg_eco_time_human(14), 
-# ncol=2, nrow=4, legend=c("right"))
-# 
-# # ggarrange(make_gg_eco_time(4),
-# make_gg_eco_time(8),
-# make_gg_eco_time(3),
-# make_gg_eco_time(14),
-# ncol=1, nrow=4, legend=c("right"))
 
 
 ##########################################################################################
@@ -1275,12 +1225,6 @@ ggplot_segmented<- function(i, let){
   
 }
 
-# All variables
-par(mfrow=c(3,5))
-for (i in 1:14){
-  plot_segmented(i, i)
-}
-
 
 # Figure 3
 ggarrange(
@@ -1290,10 +1234,6 @@ ggarrange(
   ggplot_segmented(14, 4),
   nrow=2, ncol = 2
 )
-
-ggsave("figure_3_ggplotted_vlines.png")
-slopes[c(4, 8, 3, 14)]
-slopes2[c(4, 8, 3, 14)]
 
 
 ### Table S4
