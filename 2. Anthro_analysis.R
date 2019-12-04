@@ -1243,13 +1243,13 @@ plot_segmented<- function(number){
   }
 }
 
-ggplot_segmented<- function(i){
+ggplot_segmented<- function(i, let){
     if (num_breaks[i]=="1"){
       ggplot(data_list[[i]], aes(x=anthro, y=depend.var)) +
         geom_point(alpha = 0.5, color = "grey60") +
         xlab("Proportion anthropogenic ignitions") +
         ylab(units_simple[i]) +
-        ggtitle(names_no_units[i]) +
+        ggtitle(paste0(letters[let], ". ", names_no_units[i]))+
         scale_y_continuous(trans = "log10")+
         theme_pubr() +
         geom_line(aes(y = predict(segmented_list[[i]])), lwd=1)+
@@ -1267,7 +1267,7 @@ ggplot_segmented<- function(i){
         geom_point(alpha = 0.5, color = "grey60") +
         xlab("Proportion anthropogenic ignitions") +
         ylab(units_simple[i]) +
-        ggtitle(names_no_units[i]) +
+        ggtitle(paste0(letters[let], ". ", names_no_units[i]))+
         scale_y_continuous(trans = "log10")+
         theme_pubr() +
         geom_line(aes(y = predict(regression_list[[i]])), lwd=1)
@@ -1278,36 +1278,26 @@ ggplot_segmented<- function(i){
 # All variables
 par(mfrow=c(3,5))
 for (i in 1:14){
-  plot_segmented(i)
+  plot_segmented(i, i)
 }
 
 
 # Figure 3
-par(mfrow=c(2,2))
-for (i in c(4, 8, 3, 14)){
-  plot_segmented(i)
-}
-
-# ggplot figure 3
 ggarrange(
-  ggplot_segmented(4),
-  ggplot_segmented(8),
-  ggplot_segmented(3),
-  ggplot_segmented(14),
-  nrow=2,
-  ncol = 2
-  
+  ggplot_segmented(4, 1),
+  ggplot_segmented(8, 2),
+  ggplot_segmented(3, 3),
+  ggplot_segmented(14, 4),
+  nrow=2, ncol = 2
 )
+
 ggsave("figure_3_ggplotted_vlines.png")
 slopes[c(4, 8, 3, 14)]
 slopes2[c(4, 8, 3, 14)]
 
 
-
-
 ### Table S4
-seg_table<-cbind(adj.r.square, num_breaks, breaks, slopes, slopes2)
-# write.csv(seg_table, "0_Anthro/Results/seg_table.csv")
+seg_table<-cbind(num_breaks, breaks, slopes, slopes2, adj.r.square)
 
 
 ######################################################################################
@@ -1339,48 +1329,8 @@ samples_ign_mean$anthro_group3<-
                 )))
 
 
-# could add below to fig if want to do standard error rather than sd
-f <- function(z)sd(z)/sqrt(length(z)) # function to calculate std.err
-se <- aggregate(cbind(se.x=log(samples_df_mean[,variable1]),se.y=log(samples_df_mean[,variable2]))~anthro_group3, samples_df_mean,f, na.action=na.omit)
-gg <- merge(gg,se, by="anthro_group3")    # add std.err column
-
-
-make_nich_fig<-function(variable1, variable2, let){
-  gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=log(samples_ign_mean[,variable1]), mean.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
-  gg <- merge(gg1, aggregate(cbind(se.x=log(samples_ign_mean[,variable1]), se.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
-  ggplot(gg, aes(log(gg[,variable1+1]), log(gg[,variable2+1]),color=factor(anthro_group3)))+
-    geom_point(alpha=.4, size=1)+
-    ggtitle(paste0(letters[let], ". "))+
-    labs(x=paste0("log ", names_simple[variable1]), y=paste0("log ", names_simple[variable2]), color="Ignition Source")+ 
-    scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
-    geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
-    geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y), inherit.aes = FALSE)+
-    geom_errorbarh(data=gg, height=0, alpha = .2,  aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x), inherit.aes = FALSE)
-}	
-
-
 samples_ign_mean$Std_JD_Short_mean2<-ifelse(samples_ign_mean$Std_JD_Short_mean==0, NA, samples_ign_mean$Std_JD_Short_mean)
 samples_ign_mean$Number_fires_Short_mean2<-ifelse(samples_ign_mean$Number_fires_Short_mean==0, NA, samples_ign_mean$Number_fires_Short_mean)
-
-names(samples_ign_mean)
-
-make_nich_fig2<-function(variable1, variable2, let){
-  gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=log(samples_ign_mean[,variable1]), mean.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
-  gg <- merge(gg1, aggregate(cbind(se.x=log(samples_ign_mean[,variable1]), se.y=log(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
-  ggplot(gg, aes(log(gg[,variable1]), log(gg[,variable2]),color=factor(anthro_group3)))+
-    geom_point(alpha=.2, size=1)+
-    ggtitle(paste0(letters[let], ". "))+
-    labs(x=paste0("log ", names_simple[3]), y=paste0("log ", names_simple[14]), color="Ignition Source")+ 
-    scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
-    geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
-    geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y), inherit.aes = FALSE)+
-    geom_errorbarh(data=gg, height=0, alpha = .2, aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x),  inherit.aes = FALSE)
-}		
-
-
-### Figure 2 - a,b 
-ggarrange(make_nich_fig(8, 4,1), make_nich_fig2(20, 19,2),
-          ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
 
 
 means_sds <- samples_ign_mean %>%
@@ -1455,40 +1405,9 @@ p2 <- ggplot(samples_ign_mean, aes(x=Number_fires_Short_mean2,
   #annotation_logticks()  +
   theme_pubr();p2
 
+
+### Figure 2 - a,b 
 ggarrange(p1,p2, ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
-
-
-
-ggarrange(make_nich_fig(2, 1,1), make_nich_fig2(4, 3,2),
-          ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
-
-# NO LOG FOR REVIEWER
-make_nich_fig_no_log<-function(variable1, variable2){
-  gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=(samples_ign_mean[,variable1]), mean.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
-  gg <- merge(gg1, aggregate(cbind(se.x=(samples_ign_mean[,variable1]), se.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
-  ggplot(gg, aes((gg[,variable1+1]), (gg[,variable2+1]),color=factor(anthro_group3)))+
-    geom_point(alpha=.4, size=1)+
-    labs(x=paste0(names_simple[variable1]), y=paste0(names_simple[variable2]), color="Ignition Source")+ 
-    scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
-    geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
-    geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y), inherit.aes = FALSE)+
-    geom_errorbarh(data=gg, height=0, alpha = .2,  aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x), inherit.aes = FALSE)
-}	
-
-make_nich_fig2_no_log<-function(variable1, variable2){
-  gg1 <- merge(samples_ign_mean, aggregate(cbind(mean.x=log(samples_ign_mean[,variable1]), mean.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, mean, na.action=na.omit), by="anthro_group3")
-  gg <- merge(gg1, aggregate(cbind(se.x=(samples_ign_mean[,variable1]), se.y=(samples_ign_mean[,variable2]))~anthro_group3, samples_ign_mean, sd, na.action=na.omit), by="anthro_group3")
-  ggplot(gg, aes((gg[,variable1]), (gg[,variable2]),color=factor(anthro_group3)))+
-    geom_point(alpha=.2, size=1)+
-    labs(x=paste0(names_simple[3]), y=paste0(names_simple[14]), color="Ignition Source")+ 
-    scale_colour_manual(values=(cbPalette[c(2,1)]), labels=c("Primarily Lightning (>75%)", "Primarily Anthropogenic (>75%)")) +
-    geom_point(data=gg, alpha = .2, size=1.5, aes(x=mean.x, y=mean.y), inherit.aes = FALSE)+
-    geom_errorbar(data=gg, width=0, alpha = .2, aes(x=mean.x, ymin=mean.y-se.y,ymax=mean.y+se.y), inherit.aes = FALSE)+
-    geom_errorbarh(data=gg, height=0, alpha = .2, aes(y=mean.y, xmin=mean.x-se.x,xmax=mean.x+se.x),  inherit.aes = FALSE)
-}		
-
-ggarrange(make_nich_fig_no_log(8, 4), make_nich_fig2_no_log(20, 19),
-          ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
 
 
 
