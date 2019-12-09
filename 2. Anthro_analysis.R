@@ -613,32 +613,46 @@ ggarrange(make_gg(1), make_gg(2), make_gg(3),
 
 
 plot_ign_char1<-function(x_char, xlim_2, let){
-  ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
-    guides(fill=guide_legend(title="Ignition source"))+
+  ggplot(samples_ign_mean[samples_ign_mean[,x_char]!=0,], 
+         aes(x=samples_ign_mean[samples_ign_mean[,x_char]!=0, x_char], 
+             fill=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign,
+             lty=samples_ign_mean[samples_ign_mean[,x_char]!=0,]$ign))+
+    guides(fill=guide_legend(title="Ignition source"),
+           lty = guide_legend(title="Ignition source"))+
+    scale_linetype_manual(values = c(2,1))+
+    
     xlab (units_simple[x_char])+
     geom_density(alpha=.5)+
     ggtitle(paste0(letters[let], ". ",  names_no_units[x_char], fire_characteristics_ign$sig[x_char]))+
-    scale_fill_manual(values=c(cbPalette))+
+    # scale_fill_manual(values=c(cbPalette))+
+    scale_fill_manual(values = c("grey", "black")) +
     coord_cartesian(xlim = c(0, xlim_2))+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), axis.line = element_line(colour = "black"))
 }
 
 make_gg1<-function(char, let){
-  ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" | grouped_list[[char]]$ign=="Lightning"),], aes(x = year, y = value_by_group)) +
-    geom_point(aes(color = factor(ign))) +
-    scale_color_manual(values=c(cbPalette))+
+  ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" |
+                                        grouped_list[[char]]$ign=="Lightning"),],
+         aes(x = year, y = value_by_group)) +
+    geom_point(aes(shape = factor(ign))) +
+    # scale_color_manual(values=c(cbPalette))+
+    scale_shape_manual(values = c(1, 19)) +
     ggtitle(paste0(letters[let], ". "))+
-    geom_smooth(method="lm", aes(group = ign, color = factor(ign)))+
+    geom_smooth(method="lm", color= "black", aes(group = ign, lty = ign))+
+    scale_linetype_manual(values = c(2,1))+
     labs(x="Year", y=units_simple[char], colour="Ignition type")+
-    theme_bw()
+    theme_pubr()
 }
 
 
 ### Figure 2 - c-j
 # Lightning has more extreme average fires
 # Human has more frequent fires with longer seasonality
-ggarrange(plot_ign_char1(x_char=4, 150, 3), plot_ign_char1(x_char=8, 200, 4),   plot_ign_char1(x_char=3, 100, 5), plot_ign_char1(x_char=14, 250, 6), make_gg1(4, 7), make_gg1(8, 8), make_gg1(3, 9), make_gg1(14, 10), ncol=4, nrow=2, legend=c("none"))
+ggarrange(plot_ign_char1(x_char=4, 150, 3), plot_ign_char1(x_char=8, 200, 4),   
+          plot_ign_char1(x_char=3, 100, 5), plot_ign_char1(x_char=14, 250, 6), 
+          make_gg1(4, 7), make_gg1(8, 8), make_gg1(3, 9), make_gg1(14, 10), 
+          ncol=4, nrow=2, legend=c("none"))
 
 
 
@@ -649,21 +663,42 @@ ggarrange(plot_ign_char1(x_char=4, 150, 3), plot_ign_char1(x_char=8, 200, 4),   
 # Do these trends vary spatially across the US? 
 # map of us - colored by ecoregion for human or anthro greater and by how much?
 
+library(nngeo)
+
+if(file.exists("l1_eco.gpkg")){
+  l1_eco<- st_read("l1_eco.gpkg")
+}else{
+  l1_eco <- Ecoregion %>%
+    group_by(NA_L1NAME) %>%
+    summarise() %>%
+    ungroup() %>%
+    nngeo::st_remove_holes() %>%
+    mutate(NA_L1NAME = str_to_title(NA_L1NAME))%>%
+    na.omit()%>%
+    rename(Ecoregion = NA_L1NAME) %>%
+    filter(Ecoregion != "Water")
+  
+  st_write(l1_eco, "l1_eco.gpkg")
+}
 # map of ecoregion locations
 library(stringr)
 samples_df$ecoregion2<-str_to_title(samples_df$ecoregion)
 
 eco_plot<-function(data){
-  ggplot(data, aes(x, y)) + 
-    geom_point(aes(color = factor(ecoregion2))) +  
-    coord_equal() +
-    labs(colour="Ecoregion")+
+  ggplot(data) + 
+    # geom_point(aes(color = factor(ecoregion2))) +  
+    geom_sf(aes(fill = factor(Ecoregion)))+
+    # coord_equal() +
+    labs(fill="Ecoregion")+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
-    geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+          panel.background = element_blank(), axis.line = element_blank(),
+          axis.text.x=element_blank(), axis.text.y=element_blank(),
+          axis.ticks.x=element_blank(), axis.ticks.y=element_blank(),
+          axis.title.x=element_blank(), axis.title.y=element_blank())#+
+    #geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
 
-eco_plot(samples_df)
+eco_plot(l1_eco)
 
 # Eco names 3, 7, 9, 10 dominated just by human ignitions
 # remove Water and NA (7, 8)
@@ -808,8 +843,19 @@ for (i in 1:15){
 # merge with ecoregion, x, and y
 new_df<-vector('list', 15)
 for (i in 1:15){
-  new_df[[i]]<-merge(samples_df[,c(377:378, 379)], fire_characteristics_ign_eco_map[[i]][,c(1,2, 3, 7)], by.x="ecoregion", by.y="Ecoregion")
+  new_df[[i]]<-merge(samples_df[,c(377:378, 379)], 
+                     fire_characteristics_ign_eco_map[[i]][,c(1,2, 3, 7)], 
+                     by.x="ecoregion", by.y="Ecoregion")
 }
+
+
+newer_df<-vector('list', 15)
+for (i in 1:15){
+  newer_df[[i]]<- l1_eco %>%
+    left_join(mutate(fire_characteristics_ign_eco_map[[i]][,c(1,2, 3, 7)],
+                     Ecoregion = str_to_title(Ecoregion)))
+}
+
 
 make_gg_eco<-function(char){
   ggplot(new_df[[char]],  aes(x, y)) + 
@@ -832,32 +878,39 @@ ggarrange(make_gg_eco(10),make_gg_eco(11),  make_gg_eco(12), make_gg_eco(13),
 
 
 make_gg_eco_char_human<-function(char){
-  ggplot(new_df[[char]],  aes(x, y)) + 
+  ggplot(newer_df[[char]]) + 
     coord_equal() +
-    geom_point(aes(color = Human)) +  
-    scale_color_gradient(low="yellow", high="red", limits=c(0, max(eco_characteristics[[char]]$Mean, na.rm=TRUE)))+
-    labs(colour=units_simple[[char]])+
+    geom_sf(aes(fill = Human)) +  
+    #scale_color_gradient(low="yellow", high="red", limits=c(0, max(eco_characteristics[[char]]$Mean, na.rm=TRUE)))+
+    scale_fill_gradient(low = "white", high = "black") +
+    labs(fill=units_simple[[char]])+
     theme(plot.title = element_text(hjust = 0.5))+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
-    geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+          panel.background = element_blank(), axis.line = element_blank(),
+          axis.text.x=element_blank(), axis.text.y=element_blank(),
+          axis.ticks.x=element_blank(), axis.ticks.y=element_blank(),
+          axis.title.x=element_blank(), axis.title.y=element_blank())#+
+    #geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
 
 
 make_gg_eco_char_light<-function(char){
-  ggplot(new_df[[char]],  aes(x, y)) + 
+  ggplot(newer_df[[char]]) + 
     coord_equal() +
-    geom_point(aes(color = Lightning)) +  
-    scale_color_gradient(low="yellow", high="red", limits=c(0, max(eco_characteristics[[char]]$Mean, na.rm=TRUE)))+
-    labs(colour=units_simple[[char]])+
+    geom_sf(aes(fill = Lightning)) +  
+    #scale_color_gradient(low="yellow", high="red", limits=c(0, max(eco_characteristics[[char]]$Mean, na.rm=TRUE)))+
+    scale_fill_gradient(low = "white", high = "black") +
+    labs(fill=units_simple[[char]])+
     theme(plot.title = element_text(hjust = 0.5))+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
-    geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+          panel.background = element_blank(), axis.line = element_blank(),
+          axis.text.x=element_blank(), axis.text.y=element_blank(),
+          axis.ticks.x=element_blank(), axis.ticks.y=element_blank(),
+          axis.title.x=element_blank(), axis.title.y=element_blank())
 }
 
 # Figure 4
-#dev.off() 
+#dev.off()
 ggarrange(make_gg_eco_char_light(4), make_gg_eco_char_human(4), 
           make_gg_eco_char_light(6), make_gg_eco_char_human(6),
           make_gg_eco_char_light(2), make_gg_eco_char_human(2),
@@ -865,15 +918,14 @@ ggarrange(make_gg_eco_char_light(4), make_gg_eco_char_human(4),
           ncol=2, nrow=4, legend=c("right"))
 
 make_gg_eco_fig<-function(char){
-  ggplot(new_df[[char]],  aes(x, y)) + 
+  ggplot(newer_df[[char]]) + 
     coord_equal() +
-    geom_point(aes(color = factor(category))) +  
-    scale_color_manual(values = c("Dominated by human ign only"="firebrick4", "Human" = "firebrick2", "Human, not sig"="bisque2", "Lightning"="dodgerblue3", "Lightning, not sig"="slategray2"))+
-    labs(colour="Ignition source with higher value")+
+    geom_sf(aes(fill = factor(category))) +  
+    scale_fill_grey()+
+    labs(fill="Ignition source with higher value")+
     theme(plot.title = element_text(hjust = 0.5))+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
-    geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())
 }
 
 ggarrange(make_gg_eco_fig(4),
@@ -1296,14 +1348,14 @@ means_sds <- samples_ign_mean %>%
 library(scales)
 p1 <- ggplot(samples_ign_mean, aes(x=(Mean_area_Short_mean), 
                                    y=(Mean_FRP_MODIS_mean),
-                                   color = ign)) +
-  geom_point(alpha = 0.4, size = 1) +
-  geom_errorbar(data = means_sds, width=0, #alpha = .2,
+                                   shape = ign)) +
+  geom_point(alpha = .5, size = 3) +
+  geom_errorbar(data = means_sds, width=0, color="black",lwd=2, #alpha = .2,
                 aes(x = exp(mean_area),
                     ymin = exp(mean_frp - sd_frp),
                     ymax = exp(mean_frp + sd_frp)),
                 inherit.aes = FALSE) +
-  geom_errorbarh(data = means_sds, height=0, #alpha = .2,
+  geom_errorbarh(data = means_sds, height=0, color = "black", lwd = 2,#alpha = .2,
                  aes(y = exp(mean_frp),
                      xmin = exp(lowera),
                      xmax = exp(mean_area + sd_area)),
@@ -1313,44 +1365,60 @@ p1 <- ggplot(samples_ign_mean, aes(x=(Mean_area_Short_mean),
   scale_y_continuous(trans = "log10") +
   scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) + 
-  scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  # scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  scale_shape_manual(values = c(1,19), name = "Ignition Source")+
+  
   ylab("Average Intensity (MW)") +
   xlab("Average Fire Size (ha)") +
-  #annotation_logticks()  +
-  theme_pubr();p1
+  theme_pubr()+
+  theme(legend.position = "none");p1
 
 
 p2 <- ggplot(samples_ign_mean, aes(x=Number_fires_Short_mean2, 
                                    y=Std_JD_Short_mean2,
-                                   color = ign)) +
-  geom_point(alpha = 0.4, size = 1) +
+                                   shape= ign)) +
+  geom_point(alpha = 0.4, size = 3) +
   
-  geom_errorbar(data = means_sds, width=0, #alpha = .2,
+  geom_errorbar(data = means_sds, width=0, lwd =2, color = "black", #alpha = .2,
                 aes(x = exp(mean_n),
                     ymin = exp(mean_jd - sd_jd),
                     ymax = exp(mean_jd + sd_jd)),
                 inherit.aes = FALSE) +
-  geom_errorbarh(data = means_sds, height=0, #alpha = .2,
+  geom_errorbarh(data = means_sds, height=0, lwd=2, color = "black",#alpha = .2,
                  aes(y = exp(mean_jd),
                      xmin = exp(lowern),
                      xmax = exp(mean_n + sd_n)),
                  inherit.aes = FALSE)+
   ggtitle("b.")              + 
-  geom_point(data=means_sds, alpha = .2, size=1.5, aes(x=exp(mean_n), y=exp(mean_jd)), inherit.aes = FALSE) +
+  geom_point(data=means_sds, alpha = .2, size=1.5, aes(x=exp(mean_n),
+                                                       y=exp(mean_jd)), 
+             inherit.aes = FALSE) +
   scale_y_continuous(trans = "log10") +
   scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
-                labels = trans_format("log10", math_format(10^.x))) +   scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+                labels = trans_format("log10", math_format(10^.x))) +  
+  #scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  scale_shape_manual(values = c(1,19), name = "Ignition Source")+
   xlab("Fire frequency (n fires)") +
   ylab("Season Length (days)") +
-  #annotation_logticks()  +
-  theme_pubr();p2
+  theme_pubr()+
+  theme(legend.position = c(1,0),
+        legend.justification = c(1,0));p2
 
 
-### Figure 2 - a,b 
-ggarrange(p1,p2, ncol=2, nrow=1, legend=c("right"), common.legend=TRUE)
+### Figure 2 - a,b (and the rest from before)
+f2ab<-ggarrange(p1,p2, ncol=2, nrow=1)
 
-
-
+f2cdefghij<- ggarrange(plot_ign_char1(x_char=4, 150, 3), plot_ign_char1(x_char=8, 200, 4),   
+          plot_ign_char1(x_char=3, 100, 5), plot_ign_char1(x_char=14, 250, 6), 
+          make_gg1(4, 7), make_gg1(8, 8), make_gg1(3, 9), make_gg1(14, 10), 
+          ncol=4, nrow=2, legend=c("none"))
+library(cowplot)
+cowplot::ggdraw() +
+  draw_plot(f2ab, 0,.55,1,.45) +
+  draw_plot(f2cdefghij, 0,0,1,.55) +
+  annotate("text", x = .12, y = .48, label = "Human")+
+  annotate("text", x = .17, y = .4, label = "Lightning")+
+  ggsave("figure2.png", dpi=600, width = 12.75, height =16.5)
 # Are anthro fires less intense just be there are more of them over a longer season length when we don't think of fires getting large and hot?
 # Another idea that I have for this, is what if, instead of dividing e.g. size/season length, we do a linear model (maybe a mixed model with pixel random effect?) with those two as predictor variables, and then remove the effect of season length, and then plot anthro igntions ~ Event size adjusted for season length? I did the same thing in my ecosphere paper, where I adjusted cheatgrass cover for elevation and it worked out really well. Max showed me how to do it and I have the code easily accessible.
 
