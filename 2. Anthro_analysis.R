@@ -620,12 +620,12 @@ plot_ign_char1<-function(x_char, xlim_2, let){
     guides(fill=guide_legend(title="Ignition source"),
            lty = guide_legend(title="Ignition source"))+
     scale_linetype_manual(values = c(2,1))+
-    
+    scale_fill_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
     xlab (units_simple[x_char])+
     geom_density(alpha=.5)+
     ggtitle(paste0(letters[let], ". ",  names_no_units[x_char], fire_characteristics_ign$sig[x_char]))+
     # scale_fill_manual(values=c(cbPalette))+
-    scale_fill_manual(values = c("grey", "black")) +
+    #scale_fill_manual(values = c("grey", "black")) +
     coord_cartesian(xlim = c(0, xlim_2))+
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
           panel.background = element_blank(), axis.line = element_line(colour = "black"))
@@ -635,14 +635,16 @@ make_gg1<-function(char, let){
   ggplot(data = grouped_list[[char]][(grouped_list[[char]]$ign=="Human" |
                                         grouped_list[[char]]$ign=="Lightning"),],
          aes(x = year, y = value_by_group)) +
-    geom_point(aes(shape = factor(ign))) +
+    geom_smooth(method="lm", aes(group = ign, lty = ign, color = ign))+
+    geom_point(aes(shape = factor(ign), color = factor(ign)), size=3) +
     # scale_color_manual(values=c(cbPalette))+
     scale_shape_manual(values = c(1, 19)) +
+    scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
     ggtitle(paste0(letters[let], ". "))+
-    geom_smooth(method="lm", color= "black", aes(group = ign, lty = ign))+
     scale_linetype_manual(values = c(2,1))+
-    labs(x="Year", y=units_simple[char], colour="Ignition type")+
+    labs(x="Year", y=units_simple[char], color="Ignition type")+
     theme_pubr()
+  
 }
 
 
@@ -1348,8 +1350,8 @@ means_sds <- samples_ign_mean %>%
 library(scales)
 p1 <- ggplot(samples_ign_mean, aes(x=(Mean_area_Short_mean), 
                                    y=(Mean_FRP_MODIS_mean),
-                                   shape = ign)) +
-  geom_point(alpha = .5, size = 3) +
+                                   shape = ign, color = ign)) +
+  geom_point(size = 3) +
   geom_errorbar(data = means_sds, width=0, color="black",lwd=2, #alpha = .2,
                 aes(x = exp(mean_area),
                     ymin = exp(mean_frp - sd_frp),
@@ -1360,14 +1362,14 @@ p1 <- ggplot(samples_ign_mean, aes(x=(Mean_area_Short_mean),
                      xmin = exp(lowera),
                      xmax = exp(mean_area + sd_area)),
                  inherit.aes = FALSE)+
-  geom_point(data=means_sds, alpha = .2, size=1.5, aes(x=exp(mean_area), y=exp(mean_frp)), inherit.aes = FALSE) +
+  geom_point(data=means_sds, alpha = .2, size=1.5, 
+             aes(x=exp(mean_area), y=exp(mean_frp)), inherit.aes = FALSE) +
   ggtitle("a.")      +
   scale_y_continuous(trans = "log10") +
   scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) + 
-  # scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
   scale_shape_manual(values = c(1,19), name = "Ignition Source")+
-  
   ylab("Average Intensity (MW)") +
   xlab("Average Fire Size (ha)") +
   theme_pubr()+
@@ -1376,8 +1378,8 @@ p1 <- ggplot(samples_ign_mean, aes(x=(Mean_area_Short_mean),
 
 p2 <- ggplot(samples_ign_mean, aes(x=Number_fires_Short_mean2, 
                                    y=Std_JD_Short_mean2,
-                                   shape= ign)) +
-  geom_point(alpha = 0.4, size = 3) +
+                                   shape= ign, color = ign)) +
+  geom_point(size = 3) +
   
   geom_errorbar(data = means_sds, width=0, lwd =2, color = "black", #alpha = .2,
                 aes(x = exp(mean_n),
@@ -1396,13 +1398,14 @@ p2 <- ggplot(samples_ign_mean, aes(x=Number_fires_Short_mean2,
   scale_y_continuous(trans = "log10") +
   scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x),
                 labels = trans_format("log10", math_format(10^.x))) +  
-  #scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+  scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
   scale_shape_manual(values = c(1,19), name = "Ignition Source")+
   xlab("Fire frequency (n fires)") +
   ylab("Season Length (days)") +
   theme_pubr()+
   theme(legend.position = c(1,0),
-        legend.justification = c(1,0));p2
+        legend.justification = c(1,0),
+        legend.background = element_rect(fill="transparent"));p2
 
 
 ### Figure 2 - a,b (and the rest from before)
