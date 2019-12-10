@@ -1422,9 +1422,8 @@ cowplot::ggdraw() +
   annotate("text", x = .12, y = .48, label = "Human")+
   annotate("text", x = .17, y = .4, label = "Lightning")+
   ggsave("figure2.png", dpi=600, width = 12.75, height =16.5)
-# Are anthro fires less intense just be there are more of them over a longer season length when we don't think of fires getting large and hot?
-# Another idea that I have for this, is what if, instead of dividing e.g. size/season length, we do a linear model (maybe a mixed model with pixel random effect?) with those two as predictor variables, and then remove the effect of season length, and then plot anthro igntions ~ Event size adjusted for season length? I did the same thing in my ecosphere paper, where I adjusted cheatgrass cover for elevation and it worked out really well. Max showed me how to do it and I have the code easily accessible.
 
+# Are anthro fires less intense just be there are more of them over a longer season length when we don't think of fires getting large and hot?
 # size ~ season length + frequency + anthro ignitions
 # intensity ~ season length + frequency + anthro ignitions
 #devtools::install_github("hohenstein/remef")
