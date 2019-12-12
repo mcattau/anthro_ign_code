@@ -891,8 +891,7 @@ make_gg_eco_char_human<-function(char){
           panel.background = element_blank(), axis.line = element_blank(),
           axis.text.x=element_blank(), axis.text.y=element_blank(),
           axis.ticks.x=element_blank(), axis.ticks.y=element_blank(),
-          axis.title.x=element_blank(), axis.title.y=element_blank())#+
-    #geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+          axis.title.x=element_blank(), axis.title.y=element_blank())
 }
 
 
