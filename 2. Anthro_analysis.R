@@ -686,7 +686,21 @@ if(file.exists("l1_eco.gpkg")){
 library(stringr)
 samples_df$ecoregion2<-str_to_title(samples_df$ecoregion)
 
+
+# Fig 4 a
 eco_plot<-function(data){
+	ggplot(data, aes(x, y)) + 
+	geom_point(aes(color = factor(ecoregion2))) +  
+	coord_equal() +
+	labs(colour="Ecoregion")+
+	scale_color_brewer(palette = "YlGn")+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
+	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+}
+eco_plot(samples_df)
+
+# eco_plot<-function(data){
   ggplot(data) + 
     # geom_point(aes(color = factor(ecoregion2))) +  
     geom_sf(aes(fill = factor(Ecoregion)))+
@@ -700,7 +714,7 @@ eco_plot<-function(data){
     #geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
 
-eco_plot(l1_eco)
+# eco_plot(l1_eco)
 
 # Eco names 3, 7, 9, 10 dominated just by human ignitions
 # remove Water and NA (7, 8)
@@ -829,9 +843,9 @@ for (i in 1:15){
 for (i in 1:15){		
   for (n in 1:10){
     fire_characteristics_ign_eco_map[[i]]$category[n]<-ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Human" & fire_characteristics_ign_eco_map[[i]]$sig[n]<=0.1, "Human", 
-                                                              ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Human" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Human, not sig",
+                                                              ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Human" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Not sig",
                                                                      ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Lightning" & fire_characteristics_ign_eco_map[[i]]$sig[n]<=0.1, "Lightning",
-                                                                            ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Lightning" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Lightning, not sig",  
+                                                                            ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Lightning" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Not sig",  
                                                                                    -9999))))
   }
 }
@@ -910,7 +924,35 @@ make_gg_eco_char_light<-function(char){
           axis.title.x=element_blank(), axis.title.y=element_blank())
 }
 
-# Figure 4
+library(RColorBrewer)
+
+# Figure 4 b-e
+
+make_gg_eco_char_human<-function(char){
+	ggplot(new_df[[char]],  aes(x, y)) + 
+	coord_equal() +
+	geom_point(aes(color=Human)) +  
+	scale_color_gradient(low="lightyellow", high="red", limits=c(0, max(eco_characteristics[[char]]$Mean, na.rm=TRUE)))+
+	labs(colour=units_simple[[char]])+
+ 	theme(plot.title = element_text(hjust = 0.5))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
+	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+}
+
+make_gg_eco_char_light<-function(char){
+	ggplot(new_df[[char]],  aes(x, y)) + 
+	coord_equal() +
+	geom_point(aes(color = Lightning)) +  
+	scale_color_gradient(low="lightyellow", high="red", limits=c(0, max(eco_characteristics[[char]]$Mean, na.rm=TRUE)))+
+	labs(colour=units_simple[[char]])+
+ 	theme(plot.title = element_text(hjust = 0.5))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
+	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
+}
+
+# Figure 4 b-e
 #dev.off()
 ggarrange(make_gg_eco_char_light(4), make_gg_eco_char_human(4), 
           make_gg_eco_char_light(6), make_gg_eco_char_human(6),
@@ -919,15 +961,20 @@ ggarrange(make_gg_eco_char_light(4), make_gg_eco_char_human(4),
           ncol=2, nrow=4, legend=c("right"))
 
 make_gg_eco_fig<-function(char){
-  ggplot(newer_df[[char]]) + 
-    coord_equal() +
-    geom_sf(aes(fill = factor(category))) +  
-    scale_fill_grey()+
-    labs(fill="Ignition source with higher value")+
-    theme(plot.title = element_text(hjust = 0.5))+
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-          panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())
+	ggplot(new_df[[char]],  aes(x, y)) + 
+	coord_equal() +
+	geom_point(aes(color = factor(category))) +  
+	scale_color_manual(values = c("Dominated by human ign only"="black", "Human" = "darkorange4", "Not significant"="gray90", "Lightning"="steelblue1"))+
+	# scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
+	labs(colour="Ignition source with higher value")+
+ 	theme(plot.title = element_text(hjust = 0.5))+
+	theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+panel.background = element_blank(), axis.line = element_blank(), axis.text.x=element_blank(), axis.text.y=element_blank(),axis.ticks.x=element_blank(), axis.ticks.y=element_blank(), axis.title.x=element_blank(), axis.title.y=element_blank())+
+	geom_polygon(data=overlay, aes(x=long, y=lat, group=group), fill=NA, colour="black")
 }
+
+# values = c("Dominated by human ign only"="firebrick4", "Human" = "firebrick2", "Human, not sig"="bisque2", "Lightning"="dodgerblue3", "Lightning, not sig"="slategray2"))+
+
 
 ggarrange(make_gg_eco_fig(4),
           make_gg_eco_fig(6),
