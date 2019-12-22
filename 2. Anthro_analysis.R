@@ -843,9 +843,9 @@ for (i in 1:15){
 for (i in 1:15){		
   for (n in 1:10){
     fire_characteristics_ign_eco_map[[i]]$category[n]<-ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Human" & fire_characteristics_ign_eco_map[[i]]$sig[n]<=0.1, "Human", 
-                                                              ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Human" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Not sig",
+                                                              ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Human" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Human, not sig",
                                                                      ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Lightning" & fire_characteristics_ign_eco_map[[i]]$sig[n]<=0.1, "Lightning",
-                                                                            ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Lightning" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Not sig",  
+                                                                            ifelse(fire_characteristics_ign_eco_map[[i]]$cat_greater[n]=="Lightning" & fire_characteristics_ign_eco_map[[i]]$sig[n]>0.1, "Lightning, not sig",  
                                                                                    -9999))))
   }
 }
@@ -964,7 +964,7 @@ make_gg_eco_fig<-function(char){
 	ggplot(new_df[[char]],  aes(x, y)) + 
 	coord_equal() +
 	geom_point(aes(color = factor(category))) +  
-	scale_color_manual(values = c("Dominated by human ign only"="black", "Human" = "darkorange4", "Not significant"="gray90", "Lightning"="steelblue1"))+
+	scale_color_manual(values = c("Dominated by human ign only"= "#660000", "Human" = "#CC0000", "Human, not sig"="#FF6666", "Lightning, not sig" ="#CCFFFF", "Lightning"="#0080FF"))+
 	# scale_color_manual(values = c("#E69F00", "#56B4E9"),name = "Ignition Source")+
 	labs(colour="Ignition source with higher value")+
  	theme(plot.title = element_text(hjust = 0.5))+
@@ -982,7 +982,7 @@ ggarrange(make_gg_eco_fig(4),
           make_gg_eco_fig(12),
           ncol=1, nrow=4, legend=c("right"))
 
-
+make_gg_eco_fig(3)
 
 ###########################################################
 ##### 6. Characterizing fire~ign_ecoregion/time ###################
