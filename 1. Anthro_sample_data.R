@@ -118,7 +118,7 @@ MTBS_point<-SpatialPointsDataFrame(MTBS_point1, MTBS@data)
 # Submit a request via the link below for Country->United States from Jan 2003 - Dec 2016, MODIS C6, and download into Data folder and unzip
 # https://firms.modaps.eosdis.nasa.gov/download/
 
-MODIS2 <- st_read(dsn = 'DL_FIRE_M6_88165', layer = "fire_archive_M6_88165", quiet = TRUE) %>%
+MODIS2 <- st_read(dsn = 'MODIS', layer = "fire_archive_M6_88165", quiet = TRUE) %>%
 st_transform(., data_crs)
 
 MODIS<-as(MODIS2, 'Spatial')
@@ -139,7 +139,7 @@ MODIS<-MODIS[MODIS$FireYear>=2003,]														# Remove all before 2003
  # https://www.dropbox.com/s/xiyzlme6rt3ierx/shortfireseco073015.txt?dl=0
    
    
-Short <- read.table("Short_Data/ShortDB.txt", sep=",",
+Short <- read.table("FPA-FOD/ShortDB.txt", sep=",",
                header=T, fill=T,
                quote = "\"", #quote key
                row.names = NULL, 
@@ -202,8 +202,8 @@ aggregate(Short$ha, by=list(Category=Short$ig), FUN=sum)
 # Lightning: 34,730,827 ha
 
 aggregate(Short$FIRE_SIZE, by=list(Category=Short$ig), FUN=sum)
-#   human 43714035
-# lightning 85821753
+#   human 43,714,035
+# lightning 85,821,753
 
             
 
@@ -253,7 +253,7 @@ Short_human_parsed<-parse_vector(Short_human, "Short_human", 1992:2015)
 ## 4. 	Mean_FRP_MODIS
 ## 5.	 	Max_FRP_MODIS
 
-# Mean, max fire even size MTBS, Short												
+# Mean, max fire event size MTBS, Short												
 ## 6. 	Mean_area_MTBS
 ## 7.	 	Max_area_MTBS
 ## 8. 	Mean_area_Short
@@ -342,6 +342,8 @@ results_rasterstack<-stack(stack(Number_fires_MODIS), stack(Number_fires_MTBS), 
 writeRaster(results_rasterstack,"results_rasterstack.grd", format="raster", overwrite=TRUE)
 # results_rasterstack<-stack("results_rasterstack.grd")							# Import sampled rasters - annual
 
+
+
 # stats on each variable across all years rather than annual
 Number_fires_MODIS_mean<-calc(results_rasterstack[[1:14]], mean)
 Number_fires_MTBS_mean<-calc(results_rasterstack[[15:46]], mean)
@@ -368,8 +370,10 @@ Perc_fires_Short_human_mean<-calc(results_rasterstack[[337:360]], mean, na.rm=TR
 
 results_rasterstack_mean<-stack(Number_fires_MODIS_mean, Number_fires_MTBS_mean, Number_fires_Short_mean, Mean_FRP_MODIS_mean, Max_FRP_MODIS_mean, Mean_area_MTBS_mean, Max_area_MTBS_mean, Mean_area_Short_mean, Max_area_Short_mean,  Sum_area_MTBS_mean, Sum_area_Short_mean, Std_JD_MTBS_mean, Std_JD_MODIS_mean, Std_JD_Short_mean, Perc_fires_Short_human_mean)
 
+# compare results_rasterstack_mean_org with results_rasterstack_mean
 
 writeRaster(results_rasterstack_mean,"results_rasterstack_mean.grd", format="raster", overwrite=TRUE)
+# results_rasterstack_mean<-stack("results_rasterstack_mean.grd")							# Import sampled rasters - annual
 
 
 ######################### Get data into shape #############################
@@ -427,12 +431,5 @@ write.csv(samples_df, "samples_df.csv")
 # samples_df<-read.csv("0_Anthro/Data/samples_df.csv")
 # names(samples_df)
 # samples_df<-samples_df[,-1]	
-
-
-
-
-
-
-
 
 
