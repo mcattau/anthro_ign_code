@@ -110,6 +110,7 @@ ifelse(MTBS$StartMonth==12, 334,0
 MTBS$JD<-MTBS$running_JD+MTBS$StartDay
 MTBS$FireYear<-MTBS$Year																				# add year column
 MTBS$FireID<-1:nrow(MTBS)		
+MTBS$ha<-MTBS$Acres*0.4046856
 
 MTBS_point1<-gCentroid(MTBS, byid=TRUE, id=MTBS$FireId)
 MTBS_point<-SpatialPointsDataFrame(MTBS_point1, MTBS@data)
@@ -314,13 +315,13 @@ Mean_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_meanFRP", 2003:2016
 Max_FRP_MODIS<-annual_rasters(MODIS_parsed, Fishnet, "MODIS_maxFRP", 2003:2016, "FRP", fun=max,  background=NA)
 
 # Fire event size
-Mean_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_meanArea", 1984:2015, "Acres", fun=mean, background=NA) 
-Max_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_maxArea", 1984:2015, field="Acres", fun=max,  background=NA) 
+Mean_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_meanArea", 1984:2015, "ha", fun=mean, background=NA) 
+Max_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_maxArea", 1984:2015, field="ha", fun=max,  background=NA) 
 Mean_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_meanArea", 1992:2015, "ha", fun=mean, background=NA) 
 Max_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_maxArea", 1992:2015, "ha", fun=max, background=NA) 
 
 # Burned area
-Sum_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_sumArea", 1984:2015, "Acres", fun=sum, background=NA) 
+Sum_area_MTBS<-annual_rasters(MTBS_parsed, Fishnet, "MTBS_sumArea", 1984:2015, "ha", fun=sum, background=NA) 
 Sum_area_Short<-annual_rasters(Short_parsed, Fishnet, "Short_sumArea", 1992:2015, "ha", fun=sum, background=NA) 
 
 # Fire seasonality
@@ -338,10 +339,9 @@ Number_fires_Short_human<-annual_rasters(Short_human_parsed, Fishnet, "Short_Num
 Perc_fires_Short_human<-stack(Number_fires_Short_human) / stack(Number_fires_Short2)
 
 results_rasterstack<-stack(stack(Number_fires_MODIS), stack(Number_fires_MTBS), stack(Number_fires_Short), stack(Mean_FRP_MODIS), stack(Max_FRP_MODIS), stack(Mean_area_MTBS), stack(Max_area_MTBS), stack(Mean_area_Short), stack(Max_area_Short), stack(Sum_area_MTBS), stack(Sum_area_Short), stack(Std2_JD_MTBS), stack(Std2_JD_MODIS), stack(Std2_JD_Short), stack(Perc_fires_Short_human))
-
+names(results_rasterstack)
 writeRaster(results_rasterstack,"results_rasterstack.grd", format="raster", overwrite=TRUE)
 # results_rasterstack<-stack("results_rasterstack.grd")							# Import sampled rasters - annual
-
 
 
 # stats on each variable across all years rather than annual
@@ -369,8 +369,6 @@ Perc_fires_Short_human_mean<-calc(results_rasterstack[[337:360]], mean, na.rm=TR
 
 
 results_rasterstack_mean<-stack(Number_fires_MODIS_mean, Number_fires_MTBS_mean, Number_fires_Short_mean, Mean_FRP_MODIS_mean, Max_FRP_MODIS_mean, Mean_area_MTBS_mean, Max_area_MTBS_mean, Mean_area_Short_mean, Max_area_Short_mean,  Sum_area_MTBS_mean, Sum_area_Short_mean, Std_JD_MTBS_mean, Std_JD_MODIS_mean, Std_JD_Short_mean, Perc_fires_Short_human_mean)
-
-# compare results_rasterstack_mean_org with results_rasterstack_mean
 
 writeRaster(results_rasterstack_mean,"results_rasterstack_mean.grd", format="raster", overwrite=TRUE)
 # results_rasterstack_mean<-stack("results_rasterstack_mean.grd")							# Import sampled rasters - annual
@@ -428,8 +426,7 @@ samples_p$ecoregion<-eco_data
 
 ### Write and retrieve samples_df dataframe
 write.csv(samples_df, "samples_df.csv")
-# samples_df<-read.csv("0_Anthro/Data/samples_df.csv")
+# samples_df<-read.csv("samples_df.csv")
 # names(samples_df)
 # samples_df<-samples_df[,-1]	
-
 
